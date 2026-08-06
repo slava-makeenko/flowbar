@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Стиль
+        run: xcrun swift-format lint --strict --recursive Sources App Tests
+
+      - name: Границы слоёв
+        run: Scripts/check-layers.sh
+
+      - name: Сборка
+        run: swift build
+
+      - name: Тесты
+        run: swift test

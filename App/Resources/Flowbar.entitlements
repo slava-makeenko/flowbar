@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Песочница включена с первого дня: ADR-0003. -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+
+  <!-- Папка со скриншотами: пользователь выбирает её один раз,
+       дальше доступ живёт в security-scoped bookmark. Спека §10. -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+
+  <!-- ScriptingBridge к Music.app и Spotify. ADR-0002. -->
+  <key>com.apple.security.automation.apple-events</key>
+  <true/>
+</dict>
+</plist>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Flowbar</string>
+  <key>CFBundleDisplayName</key>
+  <string>Flowbar</string>
+  <key>CFBundleIdentifier</key>
+  <string>app.flowbar.Flowbar</string>
+  <key>CFBundleExecutable</key>
+  <string>Flowbar</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>15.0</string>
+
+  <!-- Резидентная утилита: ни иконки в Dock, ни главного меню. Спека §2. -->
+  <key>LSUIElement</key>
+  <true/>
+
+  <!-- Шрифт бандлится: Inter Variable под SIL OFL 1.1. Спека §5. -->
+  <key>ATSApplicationFontsPath</key>
+  <string>Fonts</string>
+
+  <!-- Метаданные трека из Music.app и Spotify через ScriptingBridge. ADR-0002. -->
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Flowbar читает название и обложку трека из Music.app и Spotify, чтобы показать их в плеере.</string>
+</dict>
+</plist>
