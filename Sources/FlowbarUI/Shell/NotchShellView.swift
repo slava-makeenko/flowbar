@@ -11,6 +11,7 @@ public struct NotchShellView: View {
   private let geometry: NotchGeometry
   private let state: ShellState
   private let clipboard: ClipboardViewModel
+  private let music: MusicViewModel
   private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
@@ -24,6 +25,7 @@ public struct NotchShellView: View {
   ///   - geometry: геометрия окна на текущем экране.
   ///   - state: состояние раскрытия и навигации.
   ///   - clipboard: вью-модель истории копирований.
+  ///   - music: вью-модель плеера.
   ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
@@ -33,6 +35,7 @@ public struct NotchShellView: View {
     geometry: NotchGeometry,
     state: ShellState,
     clipboard: ClipboardViewModel,
+    music: MusicViewModel,
     screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
     snippets: SnippetsViewModel,
@@ -42,6 +45,7 @@ public struct NotchShellView: View {
     self.geometry = geometry
     self.state = state
     self.clipboard = clipboard
+    self.music = music
     self.screenshots = screenshots
     self.translate = translate
     self.snippets = snippets
@@ -101,6 +105,9 @@ public struct NotchShellView: View {
     case .clipboard:
       ClipboardView(model: clipboard)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    case .music:
+      PlayerView(model: music)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     case .screenshots:
       ScreenshotsView(model: screenshots)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -110,8 +117,6 @@ public struct NotchShellView: View {
     case .snippets:
       SnippetsView(model: snippets)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    case .music:
-      ModulePlaceholderView(module: state.activeModule)
     }
   }
 

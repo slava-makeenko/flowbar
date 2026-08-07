@@ -246,6 +246,51 @@ public enum Metrics {
     public static let emptyStateVerticalPadding: CGFloat = 34
   }
 
+  // MARK: - Плеер
+
+  /// Размеры экрана музыки.
+  public enum Player {
+
+    /// Зазор между обложкой и сведениями о треке.
+    public static let topSpacing: CGFloat = 20
+
+    /// Отступ под подписью источника.
+    public static let sourceBottomSpacing: CGFloat = 12
+
+    /// Отступ под названием трека.
+    public static let titleBottomSpacing: CGFloat = 5
+
+    /// Отступ над блоком прогресса.
+    public static let progressTopPadding: CGFloat = 18
+
+    /// Отступ над строкой времени.
+    public static let timeTopPadding: CGFloat = 8
+
+    /// Отступ над кнопками транспорта.
+    public static let controlsTopPadding: CGFloat = 16
+
+    /// Зазор между кнопками транспорта.
+    public static let controlsSpacing: CGFloat = 14
+
+    /// Зазор в строке громкости.
+    public static let volumeSpacing: CGFloat = 12
+
+    /// Сторона иконки громкости.
+    public static let volumeIcon: CGFloat = 18
+
+    /// Толщина дорожки ползунка.
+    public static let sliderHeight: CGFloat = 4
+
+    /// Сторона бегунка.
+    public static let sliderThumb: CGFloat = 13
+
+    /// Половина бегунка: на неё он сдвигается, чтобы центр совпал с позицией.
+    public static let sliderThumbRadius = sliderThumb / 2
+
+    /// Предельная ширина плеера.
+    public static let maximumWidth: CGFloat = 560
+  }
+
   // MARK: - Снимки
 
   /// Размеры ленты снимков.

@@ -64,6 +64,7 @@ final class CompositionRoot {
     let shell = NotchWindowController(
       state: shellState,
       clipboard: clipboard,
+      music: Self.makeMusicViewModel(),
       screenshots: makeScreenshotsViewModel(pasteboard: pasteboard),
       translate: translate,
       snippets: makeSnippetsViewModel(pasteboard: pasteboard),
@@ -84,6 +85,24 @@ final class CompositionRoot {
   func stop() {
     backgroundWork.forEach { $0.cancel() }
     backgroundWork = []
+  }
+
+  /// Метаданные берутся у Music.app и Spotify, управление — медиа-клавишами.
+  /// ADR-0002: путь A закрыт приватным entitlement, путь C один не даёт метаданных.
+  private static func makeMusicViewModel() -> MusicViewModel {
+    let music = ScriptingBridgeAdapter(player: .music)
+    let spotify = ScriptingBridgeAdapter(player: .spotify)
+    let source = CompositeNowPlayingSource(
+      metadataSources: [music, spotify],
+      seekingSources: [music, spotify],
+      controller: MediaKeyAdapter()
+    )
+    return MusicViewModel(
+      nowPlaying: source,
+      playback: source,
+      seeking: source,
+      volumeControl: CoreAudioVolumeAdapter()
+    )
   }
 
   private func makeScreenshotsViewModel(
