@@ -12,6 +12,19 @@ public actor RecordPasteboardChange {
   /// многоточием — забота вьюхи, здесь только предел хранимого.
   public static let previewLimit = 300
 
+  /// Приложения, копии из которых не сохраняются даже без пометки конфиденциальности.
+  ///
+  /// Пометка `org.nspasteboard.ConcealedType` — конвенция, а не обязанность: менеджер
+  /// паролей может её не выставить. Список — вторая линия обороны.
+  public static let defaultBlockedBundleIdentifiers: Set<String> = [
+    "com.1password.1password",
+    "com.agilebits.onepassword7",
+    "com.apple.keychainaccess",
+    "com.bitwarden.desktop",
+    "com.lastpass.LastPass",
+    "in.sinew.Enpass-Desktop",
+  ]
+
   private let pasteboard: any PasteboardReading
   private let clips: any ClipStoring
   private let blobs: any BlobStoring

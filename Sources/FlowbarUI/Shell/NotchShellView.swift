@@ -10,6 +10,7 @@ public struct NotchShellView: View {
 
   private let geometry: NotchGeometry
   private let state: ShellState
+  private let clipboard: ClipboardViewModel
   private let snippets: SnippetsViewModel
   private let feedback: CopyFeedback
 
@@ -19,16 +20,19 @@ public struct NotchShellView: View {
   /// - Parameters:
   ///   - geometry: геометрия окна на текущем экране.
   ///   - state: состояние раскрытия и навигации.
+  ///   - clipboard: вью-модель истории копирований.
   ///   - snippets: вью-модель быстрых вставок.
   ///   - feedback: подтверждение копирования.
   public init(
     geometry: NotchGeometry,
     state: ShellState,
+    clipboard: ClipboardViewModel,
     snippets: SnippetsViewModel,
     feedback: CopyFeedback
   ) {
     self.geometry = geometry
     self.state = state
+    self.clipboard = clipboard
     self.snippets = snippets
     self.feedback = feedback
   }
@@ -81,10 +85,13 @@ public struct NotchShellView: View {
 
   @ViewBuilder private var moduleContent: some View {
     switch state.activeModule {
+    case .clipboard:
+      ClipboardView(model: clipboard)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     case .snippets:
       SnippetsView(model: snippets)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    case .clipboard, .screenshots, .translate, .music:
+    case .screenshots, .translate, .music:
       ModulePlaceholderView(module: state.activeModule)
     }
   }

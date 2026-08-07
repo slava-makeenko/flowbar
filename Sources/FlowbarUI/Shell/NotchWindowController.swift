@@ -12,6 +12,7 @@ import SwiftUI
 public final class NotchWindowController {
 
   private let state: ShellState
+  private let clipboard: ClipboardViewModel
   private let snippets: SnippetsViewModel
   private let feedback: CopyFeedback
 
@@ -34,10 +35,17 @@ public final class NotchWindowController {
   /// Создаёт контроллер.
   /// - Parameters:
   ///   - state: состояние оболочки.
+  ///   - clipboard: вью-модель истории копирований.
   ///   - snippets: вью-модель быстрых вставок.
   ///   - feedback: подтверждение копирования.
-  public init(state: ShellState, snippets: SnippetsViewModel, feedback: CopyFeedback) {
+  public init(
+    state: ShellState,
+    clipboard: ClipboardViewModel,
+    snippets: SnippetsViewModel,
+    feedback: CopyFeedback
+  ) {
     self.state = state
+    self.clipboard = clipboard
     self.snippets = snippets
     self.feedback = feedback
   }
@@ -77,6 +85,7 @@ public final class NotchWindowController {
     let root = NotchShellView(
       geometry: geometry,
       state: state,
+      clipboard: clipboard,
       snippets: snippets,
       feedback: feedback
     )
