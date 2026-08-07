@@ -6,6 +6,9 @@ import CoreGraphics
 /// прототипа; единицы CSS `px` соответствуют `pt` один к одному.
 public enum Metrics {
 
+  /// Толщина волосяной линии: разделители и рамки.
+  public static let hairline: CGFloat = 1
+
   // MARK: - Радиусы
 
   /// Радиусы скруглений.
@@ -59,11 +62,38 @@ public enum Metrics {
     /// Смещение тени силуэта.
     public static let shadowOffsetY: CGFloat = 20
 
-    /// Радиус размытия тени силуэта.
+    /// Радиус размытия тени силуэта, как в макете.
     public static let shadowBlur: CGFloat = 44
+
+    /// Тот же радиус в единицах SwiftUI.
+    ///
+    /// `drop-shadow` в CSS и `.shadow` в SwiftUI считают размытие по-разному: первый берёт
+    /// диаметр, второй — стандартное отклонение. Пересчёт живёт здесь, а не во вьюхе.
+    public static let shadowRadius = shadowBlur / 2
 
     /// Непрозрачность тени силуэта.
     public static let shadowOpacity: Double = 0.58
+
+    /// Боковой отступ содержимого пилюли.
+    public static let barHorizontalPadding: CGFloat = 8
+
+    /// Отступ слева у развёрнутой пилюли — рейл начинается ближе к краю.
+    public static let barLeadingPaddingExpanded: CGFloat = 6
+
+    /// Сторона кнопки в пилюле: шеврон сворачивания.
+    public static let barButtonSide: CGFloat = 30
+
+    /// Зазор между элементами правой части пилюли.
+    public static let barItemSpacing: CGFloat = 8
+
+    /// Зазор между элементами фирменного блока пилюли.
+    public static let brandItemSpacing: CGFloat = 9
+
+    /// Сторона глазка камеры.
+    public static let lensSide: CGFloat = 7
+
+    /// Сторона индикатора активности.
+    public static let liveDotSide: CGFloat = 6
   }
 
   // MARK: - Рейл
@@ -103,6 +133,18 @@ public enum Metrics {
 
     /// Минимальная высота, ниже которой навигацию придётся перекомпоновывать.
     public static let minimumHeight: CGFloat = 339
+
+    /// Сторона квадратика логотипа.
+    public static let logoDot: CGFloat = 7
+
+    /// Зазор между квадратиками логотипа.
+    public static let logoGap: CGFloat = 3
+
+    /// Скругление квадратика логотипа.
+    public static let logoDotRadius: CGFloat = 2
+
+    /// Непрозрачность приглушённых квадратиков логотипа.
+    public static let logoDimmedOpacity: Double = 0.34
   }
 
   // MARK: - Контролы

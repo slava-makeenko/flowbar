@@ -1,5 +1,7 @@
 import FlowbarData
 import FlowbarDomain
+import FlowbarPresentation
+import FlowbarUI
 
 /// Единственное место, где встречаются конкретные типы: регламент §5, DIP.
 ///
@@ -9,9 +11,14 @@ import FlowbarDomain
 final class CompositionRoot {
 
   private let clock: any FlowbarDomain.Clock = SystemClock()
+  private let shellState = ShellState()
+  private var shell: NotchWindowController?
 
-  /// Поднимает приложение. Окно появляется в фазе 3 пайплайна.
+  /// Поднимает приложение.
   func start() {
     _ = clock
+    let shell = NotchWindowController(state: shellState)
+    shell.start()
+    self.shell = shell
   }
 }

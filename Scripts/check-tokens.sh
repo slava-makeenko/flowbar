@@ -39,7 +39,9 @@ report() {
 colors="$(collect '(Color|NSColor)\(|Color\.(white|black|red|green|blue|gray|orange|yellow)')"
 report "литералы цвета вне DesignSystem" "$colors"
 
-sizes="$(collect '\.(frame|padding|cornerRadius|offset)\([^)]*[0-9]|spacing: *[0-9]')"
+# Ноль не токен, а утверждение «без отступа», поэтому цифра должна быть значащей:
+# `spacing: 0` пропускается, `spacing: 10` — нет.
+sizes="$(collect '\.(frame|padding|cornerRadius|offset)\([^)]*[1-9]|spacing: *[0-9]*[1-9]')"
 report "литералы размера вне DesignSystem" "$sizes"
 
 [ "$status" -eq 0 ] && echo "токены: чисто"

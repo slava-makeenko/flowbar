@@ -62,6 +62,9 @@ public enum Palette {
     increasedContrast ? borderSoftIncreasedContrast : borderSoft
   }
 
+  /// Глазок камеры в пилюле.
+  public static let lens = Color.white.opacity(0.22)
+
   // MARK: - Акцент
 
   /// Акцент. Только для primary-кнопки.

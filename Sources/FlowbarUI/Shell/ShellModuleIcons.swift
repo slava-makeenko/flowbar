@@ -1,0 +1,17 @@
+import FlowbarPresentation
+
+extension ShellModule {
+
+  /// Символ SF Symbols для кнопки рейла.
+  ///
+  /// Названия модулей — забота слоя представления, рисунок иконки — забота UI.
+  var systemImage: String {
+    switch self {
+    case .clipboard: "list.clipboard"
+    case .screenshots: "camera.viewfinder"
+    case .translate: "character.bubble"
+    case .music: "music.note"
+    case .snippets: "bolt"
+    }
+  }
+}
