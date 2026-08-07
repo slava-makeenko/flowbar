@@ -6,6 +6,13 @@ import SwiftUI
 /// Экран перевода.
 struct TranslateView: View {
 
+  /// Пауза перед установкой фокуса.
+  ///
+  /// Сразу после появления вью SwiftUI ещё не построил цепочку ответчиков, и запрос
+  /// фокуса теряется молча. Величина подобрана экспериментально: 120 мс — примерно
+  /// семь кадров, с запасом переживает и медленный первый кадр после разворота.
+  private static let focusDelay: Duration = .milliseconds(120)
+
   @Bindable var model: TranslateViewModel
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -24,9 +31,7 @@ struct TranslateView: View {
     .task(id: model.focusRequests) {
       guard model.focusRequests != handledFocusRequests else { return }
       handledFocusRequests = model.focusRequests
-      // Пауза на кадр: сразу после появления вью SwiftUI ещё не построил цепочку
-      // ответчиков, и запрос фокуса теряется молча.
-      try? await Task.sleep(for: .milliseconds(120))
+      try? await Task.sleep(for: Self.focusDelay)
       isInputFocused = true
     }
   }
