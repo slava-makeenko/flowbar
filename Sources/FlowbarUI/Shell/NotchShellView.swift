@@ -10,6 +10,8 @@ public struct NotchShellView: View {
 
   private let geometry: NotchGeometry
   private let state: ShellState
+  private let snippets: SnippetsViewModel
+  private let feedback: CopyFeedback
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -17,9 +19,18 @@ public struct NotchShellView: View {
   /// - Parameters:
   ///   - geometry: геометрия окна на текущем экране.
   ///   - state: состояние раскрытия и навигации.
-  public init(geometry: NotchGeometry, state: ShellState) {
+  ///   - snippets: вью-модель быстрых вставок.
+  ///   - feedback: подтверждение копирования.
+  public init(
+    geometry: NotchGeometry,
+    state: ShellState,
+    snippets: SnippetsViewModel,
+    feedback: CopyFeedback
+  ) {
     self.geometry = geometry
     self.state = state
+    self.snippets = snippets
+    self.feedback = feedback
   }
 
   /// Содержимое вью.
@@ -45,9 +56,16 @@ public struct NotchShellView: View {
   private var panel: some View {
     HStack(spacing: 0) {
       RailView(state: state)
-      ModulePlaceholderView(module: state.activeModule)
+      moduleContent
+        .padding(.top, Metrics.Content.topPadding)
+        .padding(.horizontal, Metrics.Content.horizontalPadding)
+        .padding(.bottom, Metrics.Content.bottomPadding)
     }
     .frame(width: geometry.expandedWidth, height: geometry.panelHeight, alignment: .top)
+    .overlay(alignment: .bottom) { toast }
+    // Любой клик внутри панели закрепляет её: иначе панель схлопнется, пока пользователь
+    // печатает. Жест одновременный, чтобы не перехватывать нажатия у кнопок.
+    .simultaneousGesture(DragGesture(minimumDistance: 0).onChanged { _ in state.pin() })
     .opacity(state.isExpanded ? 1 : 0)
     .offset(y: state.isExpanded ? 0 : Motion.contentOffsetY)
     .animation(contentAnimation, value: state.isExpanded)
@@ -59,6 +77,24 @@ public struct NotchShellView: View {
         bottomTrailingRadius: Metrics.Radius.panel
       )
     )
+  }
+
+  @ViewBuilder private var moduleContent: some View {
+    switch state.activeModule {
+    case .snippets:
+      SnippetsView(model: snippets)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    case .clipboard, .screenshots, .translate, .music:
+      ModulePlaceholderView(module: state.activeModule)
+    }
+  }
+
+  @ViewBuilder private var toast: some View {
+    if let message = feedback.message {
+      Toast(message: message)
+        .padding(.bottom, Metrics.Content.bottomPadding)
+        .transition(.opacity)
+    }
   }
 
   /// Содержимое появляется с задержкой после начала разворота и уходит сразу.

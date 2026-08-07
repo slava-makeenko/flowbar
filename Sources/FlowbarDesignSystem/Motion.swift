@@ -21,12 +21,6 @@ public enum Motion {
   /// Смещение содержимого в начале появления.
   public static let contentOffsetY: CGFloat = -8
 
-  /// Сколько держится галочка на кнопке копирования.
-  public static let copyConfirmationDuration: TimeInterval = 1.4
-
-  /// Сколько держится рамка подтверждения на карточке скриншота.
-  public static let cardConfirmationDuration: TimeInterval = 0.9
-
   /// Анимация разворота панели.
   /// - Parameter reduceMotion: включён ли Reduce Motion.
   /// - Returns: анимация или `nil` — переход без анимации.

@@ -26,6 +26,9 @@ public enum Metrics {
     /// Превью скриншота и чип шортката.
     public static let chip: CGFloat = 5
 
+    /// Сегмент переключателя видов.
+    public static let segment: CGFloat = 4
+
     /// Нижний радиус свёрнутой пилюли.
     public static let notchPill: CGFloat = 20
 
@@ -178,6 +181,24 @@ public enum Metrics {
 
     /// Сторона обложки альбома.
     public static let albumArt: CGFloat = 140
+
+    /// Зазор между контролами компактной строки.
+    public static let compactSpacing: CGFloat = 6
+
+    /// Внутренний отступ переключателя видов.
+    public static let segmentedPadding: CGFloat = 2
+
+    /// Высота сегмента переключателя.
+    public static let segmentHeight: CGFloat = 28
+
+    /// Боковой отступ внутри сегмента.
+    public static let segmentHorizontalPadding: CGFloat = 10
+
+    /// Боковой отступ внутри поля ввода.
+    public static let fieldHorizontalPadding: CGFloat = 11
+
+    /// Боковой отступ внутри основной кнопки.
+    public static let primaryHorizontalPadding: CGFloat = 13
   }
 
   // MARK: - Списки и карточки
@@ -211,6 +232,18 @@ public enum Metrics {
 
     /// Зазор между карточками в ленте.
     public static let cardSpacing: CGFloat = 10
+
+    /// Зазор между кнопками действий в строке.
+    public static let actionSpacing: CGFloat = 2
+
+    /// Отступ под строкой добавления.
+    public static let formBottomSpacing: CGFloat = 8
+
+    /// Отступ под строкой подсказки.
+    public static let hintBottomSpacing: CGFloat = 10
+
+    /// Вертикальный отступ пустого состояния.
+    public static let emptyStateVerticalPadding: CGFloat = 34
   }
 
   // MARK: - Контентная область

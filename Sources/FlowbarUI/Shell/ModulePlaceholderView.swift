@@ -20,8 +20,5 @@ struct ModulePlaceholderView: View {
         .foregroundStyle(Palette.muted)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .padding(.top, Metrics.Content.topPadding)
-    .padding(.horizontal, Metrics.Content.horizontalPadding)
-    .padding(.bottom, Metrics.Content.bottomPadding)
   }
 }

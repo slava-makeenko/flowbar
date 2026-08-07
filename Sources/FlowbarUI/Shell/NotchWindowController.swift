@@ -12,6 +12,8 @@ import SwiftUI
 public final class NotchWindowController {
 
   private let state: ShellState
+  private let snippets: SnippetsViewModel
+  private let feedback: CopyFeedback
 
   private var panel: NotchPanel?
   private var hitTestView: ShapeHitTestView?
@@ -30,9 +32,14 @@ public final class NotchWindowController {
   private var collapseTask: Task<Void, Never>?
 
   /// Создаёт контроллер.
-  /// - Parameter state: состояние оболочки.
-  public init(state: ShellState) {
+  /// - Parameters:
+  ///   - state: состояние оболочки.
+  ///   - snippets: вью-модель быстрых вставок.
+  ///   - feedback: подтверждение копирования.
+  public init(state: ShellState, snippets: SnippetsViewModel, feedback: CopyFeedback) {
     self.state = state
+    self.snippets = snippets
+    self.feedback = feedback
   }
 
   /// Поднимает окно и подписки.
@@ -67,7 +74,12 @@ public final class NotchWindowController {
     let panel = self.panel ?? NotchPanel(contentRect: geometry.windowFrame)
     panel.setFrame(geometry.windowFrame, display: true)
 
-    let root = NotchShellView(geometry: geometry, state: state)
+    let root = NotchShellView(
+      geometry: geometry,
+      state: state,
+      snippets: snippets,
+      feedback: feedback
+    )
     if let hostingView {
       hostingView.rootView = root
       hostingView.frame = CGRect(origin: .zero, size: geometry.contentSize)
