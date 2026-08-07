@@ -33,6 +33,7 @@ public actor RecordPasteboardChange {
   private let blockedBundleIdentifiers: Set<String>
 
   private var lastChangeCount: Int?
+  private var hasSkippedContentFromBeforeLaunch = false
 
   /// Создаёт юзкейс.
   /// - Parameters:
@@ -74,6 +75,15 @@ public actor RecordPasteboardChange {
     guard changeCount != lastChangeCount else { return nil }
     lastChangeCount = changeCount
 
+    // Первое замеченное изменение — это то, что лежало в пастборде ещё до запуска.
+    // Счётчик запоминаем, но в историю не пишем: иначе каждый перезапуск добавлял бы
+    // копию заново. Копия, сделанная в те доли секунды, пока приложение поднималось,
+    // теряется — при автозапуске на входе в систему терять нечего.
+    guard hasSkippedContentFromBeforeLaunch else {
+      hasSkippedContentFromBeforeLaunch = true
+      return nil
+    }
+
     guard let item = await pasteboard.read() else { return nil }
     guard !item.isConcealed, !item.isTransient else { return nil }
     if let bundle = item.sourceApp.bundleIdentifier, blockedBundleIdentifiers.contains(bundle) {
@@ -91,8 +101,28 @@ public actor RecordPasteboardChange {
       sourceApp: item.sourceApp.name,
       capturedAt: clock.now
     )
-    await clips.save(clip)
+    await promoteOrSave(clip)
     return clip
+  }
+
+  /// Сохраняет запись, подняв наверх такую же, если она уже есть.
+  ///
+  /// Повторное копирование того же текста не плодит строки: старая запись удаляется,
+  /// новая встаёт наверх со свежим временем. Именно со свежим — иначе ежедневно
+  /// используемая копия сохранила бы первоначальную дату и однажды была бы удалена
+  /// чисткой как просроченная.
+  ///
+  /// Картинки не сравниваются: у каждой свой файл, и совпадение содержимого пришлось бы
+  /// проверять чтением с диска на каждое копирование.
+  private func promoteOrSave(_ clip: ClipItem) async {
+    if case .string(let text) = clip.payload {
+      let existing = await clips.all()
+      let duplicates = existing.filter { $0.payload == .string(text) }
+      if !duplicates.isEmpty {
+        await clips.remove(ids: duplicates.map(\.id))
+      }
+    }
+    await clips.save(clip)
   }
 
   // MARK: - Разбор содержимого
