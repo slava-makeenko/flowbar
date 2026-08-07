@@ -44,10 +44,23 @@ public final class ShapeHitTestView: NSView {
   }
 
   public override func mouseEntered(with event: NSEvent) {
+    guard isOurs(event) else { return super.mouseEntered(with: event) }
     onMouseEntered()
   }
 
   public override func mouseExited(with event: NSEvent) {
+    guard isOurs(event) else { return super.mouseExited(with: event) }
     onMouseExited()
+  }
+
+  /// Событие пришло от нашей области отслеживания, а не всплыло снизу.
+  ///
+  /// `NSHostingView` ставит собственную область на весь свой кадр — ей нужен hover
+  /// для кнопок SwiftUI. Своё событие она не потребляет, а реализация `NSResponder`
+  /// по умолчанию передаёт его выше по цепочке, то есть нам. Без этой проверки панель
+  /// разворачивалась от наведения на любую точку окна, включая прозрачное поле под тень:
+  /// граница срабатывания приходилась на край окна, а не на край силуэта.
+  private func isOurs(_ event: NSEvent) -> Bool {
+    event.trackingArea === shapeTrackingArea
   }
 }
