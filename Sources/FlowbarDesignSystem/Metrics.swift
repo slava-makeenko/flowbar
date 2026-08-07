@@ -246,6 +246,39 @@ public enum Metrics {
     public static let emptyStateVerticalPadding: CGFloat = 34
   }
 
+  // MARK: - Переводчик
+
+  /// Размеры экрана перевода.
+  public enum Translate {
+
+    /// Ширина колонки с кнопкой обмена языками.
+    public static let swapColumnWidth: CGFloat = 46
+
+    /// Зазор между панелями.
+    public static let paneSpacing: CGFloat = 12
+
+    /// Вертикальный отступ внутри панели.
+    public static let panePaddingVertical: CGFloat = 13
+
+    /// Боковой отступ внутри панели.
+    public static let panePaddingHorizontal: CGFloat = 14
+
+    /// Отступ под шапкой панели.
+    public static let headBottomPadding: CGFloat = 10
+
+    /// Отступ над подвалом панели.
+    public static let footTopPadding: CGFloat = 6
+
+    /// Вертикальный отступ поля ввода.
+    public static let editorVerticalPadding: CGFloat = 14
+
+    /// Высота селектора языка.
+    public static let languagePickerHeight: CGFloat = 30
+
+    /// Боковой отступ внутри селектора языка.
+    public static let languagePickerPadding: CGFloat = 7
+  }
+
   // MARK: - Контентная область
 
   /// Отступы области содержимого.

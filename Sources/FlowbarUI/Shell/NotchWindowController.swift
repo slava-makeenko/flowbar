@@ -13,8 +13,10 @@ public final class NotchWindowController {
 
   private let state: ShellState
   private let clipboard: ClipboardViewModel
+  private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
   private let feedback: CopyFeedback
+  private let backgroundHosts: AnyView
 
   private var panel: NotchPanel?
   private var hitTestView: ShapeHitTestView?
@@ -36,18 +38,24 @@ public final class NotchWindowController {
   /// - Parameters:
   ///   - state: состояние оболочки.
   ///   - clipboard: вью-модель истории копирований.
+  ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
   ///   - feedback: подтверждение копирования.
+  ///   - backgroundHosts: невидимые вью, которым нужен доступ к системным сессиям.
   public init(
     state: ShellState,
     clipboard: ClipboardViewModel,
+    translate: TranslateViewModel,
     snippets: SnippetsViewModel,
-    feedback: CopyFeedback
+    feedback: CopyFeedback,
+    backgroundHosts: AnyView
   ) {
     self.state = state
     self.clipboard = clipboard
+    self.translate = translate
     self.snippets = snippets
     self.feedback = feedback
+    self.backgroundHosts = backgroundHosts
   }
 
   /// Поднимает окно и подписки.
@@ -86,8 +94,10 @@ public final class NotchWindowController {
       geometry: geometry,
       state: state,
       clipboard: clipboard,
+      translate: translate,
       snippets: snippets,
-      feedback: feedback
+      feedback: feedback,
+      backgroundHosts: backgroundHosts
     )
     if let hostingView {
       hostingView.rootView = root

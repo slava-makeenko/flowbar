@@ -11,8 +11,10 @@ public struct NotchShellView: View {
   private let geometry: NotchGeometry
   private let state: ShellState
   private let clipboard: ClipboardViewModel
+  private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
   private let feedback: CopyFeedback
+  private let backgroundHosts: AnyView
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -21,20 +23,26 @@ public struct NotchShellView: View {
   ///   - geometry: геометрия окна на текущем экране.
   ///   - state: состояние раскрытия и навигации.
   ///   - clipboard: вью-модель истории копирований.
+  ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
   ///   - feedback: подтверждение копирования.
+  ///   - backgroundHosts: невидимые вью, которым нужен доступ к системным сессиям.
   public init(
     geometry: NotchGeometry,
     state: ShellState,
     clipboard: ClipboardViewModel,
+    translate: TranslateViewModel,
     snippets: SnippetsViewModel,
-    feedback: CopyFeedback
+    feedback: CopyFeedback,
+    backgroundHosts: AnyView
   ) {
     self.geometry = geometry
     self.state = state
     self.clipboard = clipboard
+    self.translate = translate
     self.snippets = snippets
     self.feedback = feedback
+    self.backgroundHosts = backgroundHosts
   }
 
   /// Содержимое вью.
@@ -43,6 +51,7 @@ public struct NotchShellView: View {
       NotchBarView(geometry: geometry, state: state)
       panel
     }
+    .overlay(alignment: .top) { backgroundHosts }
     .compositingGroup()
     .shadow(
       color: .black.opacity(Metrics.Shell.shadowOpacity),
@@ -88,10 +97,13 @@ public struct NotchShellView: View {
     case .clipboard:
       ClipboardView(model: clipboard)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    case .translate:
+      TranslateView(model: translate)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     case .snippets:
       SnippetsView(model: snippets)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    case .screenshots, .translate, .music:
+    case .screenshots, .music:
       ModulePlaceholderView(module: state.activeModule)
     }
   }

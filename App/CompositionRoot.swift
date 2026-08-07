@@ -3,6 +3,7 @@ import FlowbarDomain
 import FlowbarPresentation
 import FlowbarUI
 import Foundation
+import SwiftUI
 
 /// Единственное место, где встречаются конкретные типы: регламент §5, DIP.
 ///
@@ -48,11 +49,25 @@ final class CompositionRoot {
     let watcher = PasteboardWatcher(record: recorder)
     self.watcher = watcher
 
+    // Сессию перевода отдаёт только модификатор SwiftUI, поэтому адаптер работает в паре
+    // с невидимой вью. В оболочку она попадает стёртой до AnyView — слой UI про фреймворк
+    // Translation не знает. ADR-0009.
+    let translator = AppleTranslationAdapter()
+    let translate = TranslateViewModel(
+      translate: TranslateText(translator: translator, languageDetector: NLLanguageDetector()),
+      languageDetector: NLLanguageDetector(),
+      pasteboard: pasteboard,
+      feedback: feedback,
+      targetLanguage: Language(code: "en")
+    )
+
     let shell = NotchWindowController(
       state: shellState,
       clipboard: clipboard,
+      translate: translate,
       snippets: makeSnippetsViewModel(pasteboard: pasteboard),
-      feedback: feedback
+      feedback: feedback,
+      backgroundHosts: AnyView(TranslationSessionHost(adapter: translator))
     )
     shell.start()
     self.shell = shell

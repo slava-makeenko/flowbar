@@ -130,6 +130,9 @@ public enum Fill {
   /// Дорожка ползунка.
   public static let sliderTrack = Color.white.opacity(0.12)
 
+  /// Кнопка обмена языками в покое.
+  public static let swapButton = Color.white.opacity(0.04)
+
   /// Ползунок полосы прокрутки.
   public static let scrollThumb = Color.white.opacity(0.12)
 }
