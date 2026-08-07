@@ -10,6 +10,7 @@ public struct RailButton: View {
   private let action: () -> Void
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @FocusState private var isFocused: Bool
   @State private var isHovering = false
 
   /// Смещение полоски: она прижата к левому краю рейла, а не к краю кнопки.
@@ -46,6 +47,8 @@ public struct RailButton: View {
         .contentShape(.rect)
     }
     .buttonStyle(.plain)
+    .focused($isFocused)
+    .focusRing(isFocused, cornerRadius: Metrics.Radius.medium)
     .overlay(alignment: .leading) { indicator }
     .overlay(alignment: .trailing) { tooltip }
     .onHover { isHovering = $0 }
@@ -69,7 +72,7 @@ public struct RailButton: View {
   }
 
   @ViewBuilder private var tooltip: some View {
-    if isHovering {
+    if isHovering || isFocused {
       RailTooltip(title: title, shortcut: shortcut)
         .fixedSize()
         .offset(x: Metrics.Control.button + Metrics.Rail.tooltipSpacing)

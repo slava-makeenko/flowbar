@@ -19,6 +19,7 @@ final class CompositionRoot {
   private let shellState = ShellState()
   private let feedback = CopyFeedback()
 
+  private let hotKeys = HotKeyCenter()
   private var shell: NotchWindowController?
   private var watcher: PasteboardWatcher?
   private var backgroundWork: [Task<Void, Never>] = []
@@ -73,6 +74,7 @@ final class CompositionRoot {
     )
     shell.start()
     self.shell = shell
+    registerHotKeys(shell: shell, translate: translate)
 
     backgroundWork = [
       Task { await watcher.start() },
@@ -85,6 +87,25 @@ final class CompositionRoot {
   func stop() {
     backgroundWork.forEach { $0.cancel() }
     backgroundWork = []
+    hotKeys.unregisterAll()
+  }
+
+  /// Глобальные сочетания из спеки §9.
+  ///
+  /// ⇧⌘3/4/5 не перехватываются намеренно: это системные сочетания снимка экрана,
+  /// они и должны оставаться системными.
+  private func registerHotKeys(shell: NotchWindowController, translate: TranslateViewModel) {
+    hotKeys.register(.toggle) { [shellState] in
+      shellState.toggleFromShortcut()
+    }
+    hotKeys.register(.clipboard) { [shellState] in
+      shellState.open(.clipboard)
+    }
+    hotKeys.register(.translate) { [shellState] in
+      shellState.open(.translate)
+      shell.makeKey()
+      translate.requestInputFocus()
+    }
   }
 
   /// Метаданные берутся у Music.app и Spotify, управление — медиа-клавишами.

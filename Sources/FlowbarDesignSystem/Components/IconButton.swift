@@ -14,6 +14,7 @@ public struct IconButton: View {
   private let action: () -> Void
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @FocusState private var isFocused: Bool
   @State private var isHovering = false
 
   /// Назначение кнопки.
@@ -57,6 +58,8 @@ public struct IconButton: View {
         .contentShape(.rect)
     }
     .buttonStyle(.plain)
+    .focused($isFocused)
+    .focusRing(isFocused, cornerRadius: Metrics.Radius.small)
     .onHover { isHovering = $0 }
     .animation(Motion.fast(reduceMotion: reduceMotion), value: isHovering)
     .animation(Motion.fast(reduceMotion: reduceMotion), value: isConfirming)

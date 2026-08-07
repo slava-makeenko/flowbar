@@ -9,13 +9,25 @@ struct TranslateView: View {
   @Bindable var model: TranslateViewModel
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @FocusState private var isInputFocused: Bool
   @State private var isSwapHovering = false
+  @State private var handledFocusRequests = 0
 
   var body: some View {
     HStack(spacing: Metrics.Translate.paneSpacing) {
       sourcePane
       swapButton
       targetPane
+    }
+    // `task(id:)`, а не `onChange`: вью создаётся уже после запроса фокуса — модуль
+    // переключается тем же сочетанием, — и изменения значения она бы не увидела.
+    .task(id: model.focusRequests) {
+      guard model.focusRequests != handledFocusRequests else { return }
+      handledFocusRequests = model.focusRequests
+      // Пауза на кадр: сразу после появления вью SwiftUI ещё не построил цепочку
+      // ответчиков, и запрос фокуса теряется молча.
+      try? await Task.sleep(for: .milliseconds(120))
+      isInputFocused = true
     }
   }
 
@@ -30,6 +42,7 @@ struct TranslateView: View {
           .foregroundStyle(Palette.muted)
       }
       TextEditor(text: $model.sourceText)
+        .focused($isInputFocused)
         .scrollContentBackground(.hidden)
         .typeStyle(.translationField)
         .foregroundStyle(Palette.fg)

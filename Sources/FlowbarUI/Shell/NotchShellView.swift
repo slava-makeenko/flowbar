@@ -72,6 +72,12 @@ public struct NotchShellView: View {
       alignment: .top
     )
     .animation(Motion.unfold(reduceMotion: reduceMotion), value: state.isExpanded)
+    // Результат копирования иначе в VoiceOver не звучит: тост появляется и исчезает
+    // сам, фокус на него не переходит.
+    .onChange(of: feedback.message) { _, message in
+      guard let message else { return }
+      AccessibilityNotification.Announcement(message).post()
+    }
   }
 
   private var panel: some View {

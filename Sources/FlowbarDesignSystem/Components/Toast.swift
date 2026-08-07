@@ -8,6 +8,8 @@ public struct Toast: View {
 
   private let message: String
 
+  @Environment(\.colorSchemeContrast) private var contrast
+
   /// Создаёт тост.
   /// - Parameter message: текст подтверждения.
   public init(message: String) {
@@ -26,12 +28,12 @@ public struct Toast: View {
       .background(Palette.surface, in: .rect(cornerRadius: Metrics.Radius.medium))
       .overlay {
         RoundedRectangle(cornerRadius: Metrics.Radius.medium)
-          .stroke(Palette.border, lineWidth: 1)
+          .stroke(
+            Palette.border(increasedContrast: contrast == .increased),
+            lineWidth: Metrics.hairline
+          )
       }
       .shadow(color: .black.opacity(0.4), radius: 2, y: 2)
-      // Тост озвучивается как объявление: без этого результат копирования в VoiceOver
-      // не сообщается вообще.
-      .accessibilityAddTraits(.updatesFrequently)
       .accessibilityLabel(message)
   }
 }

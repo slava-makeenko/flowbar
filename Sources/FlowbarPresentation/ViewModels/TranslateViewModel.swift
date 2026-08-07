@@ -66,6 +66,12 @@ public final class TranslateViewModel {
   /// Язык, определённый по исходному тексту.
   public private(set) var detectedLanguage: Language?
 
+  /// Счётчик запросов фокуса на поле ввода.
+  ///
+  /// Именно счётчик, а не флаг: повторное сочетание должно возвращать фокус, даже если
+  /// предыдущий запрос уже обработан.
+  public private(set) var focusRequests = 0
+
   private let translate: TranslateText
   private let languageDetector: any LanguageDetecting
   private let pasteboard: any PasteboardWriting
@@ -95,6 +101,11 @@ public final class TranslateViewModel {
     self.feedback = feedback
     self.sourceLanguage = sourceLanguage
     self.targetLanguage = targetLanguage
+  }
+
+  /// Просит вью поставить фокус в поле ввода.
+  public func requestInputFocus() {
+    focusRequests += 1
   }
 
   /// Меняет языки местами вместе с содержимым полей.

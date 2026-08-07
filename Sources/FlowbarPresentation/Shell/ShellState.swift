@@ -52,6 +52,18 @@ public final class ShellState {
     isHovering = false
   }
 
+  /// Переключает панель целиком: развёрнутую сворачивает, свёрнутую закрепляет.
+  ///
+  /// Поведение глобального сочетания ⌥Space: курсор при этом может быть где угодно,
+  /// поэтому опираться на наведение нельзя.
+  public func toggleFromShortcut() {
+    if isExpanded {
+      dismiss()
+    } else {
+      isPinned = true
+    }
+  }
+
   /// Открывает модуль и закрепляет панель — так работают глобальные сочетания.
   /// - Parameter module: модуль, который нужно показать.
   public func open(_ module: ShellModule) {
