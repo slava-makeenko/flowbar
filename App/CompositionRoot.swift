@@ -64,6 +64,7 @@ final class CompositionRoot {
     let shell = NotchWindowController(
       state: shellState,
       clipboard: clipboard,
+      screenshots: makeScreenshotsViewModel(pasteboard: pasteboard),
       translate: translate,
       snippets: makeSnippetsViewModel(pasteboard: pasteboard),
       feedback: feedback,
@@ -83,6 +84,20 @@ final class CompositionRoot {
   func stop() {
     backgroundWork.forEach { $0.cancel() }
     backgroundWork = []
+  }
+
+  private func makeScreenshotsViewModel(
+    pasteboard: any PasteboardWriting
+  ) -> ScreenshotsViewModel {
+    let files = FileSystemFileReader()
+    return ScreenshotsViewModel(
+      folderAccess: ScreenshotFolderAccess(),
+      source: SpotlightScreenshotSource(),
+      renderer: QuickLookThumbnailRenderer(),
+      copyScreenshot: CopyScreenshot(files: files, pasteboard: pasteboard),
+      trash: WorkspaceTrashAdapter(),
+      feedback: feedback
+    )
   }
 
   private func makeSnippetsViewModel(

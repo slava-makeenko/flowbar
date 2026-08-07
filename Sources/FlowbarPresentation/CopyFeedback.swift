@@ -32,13 +32,18 @@ public final class CopyFeedback {
   /// - Parameters:
   ///   - message: текст тоста.
   ///   - item: идентификатор элемента, чью кнопку нужно пометить галочкой.
-  public func confirm(_ message: String, item: String) {
+  ///   - duration: сколько держится пометка.
+  public func confirm(
+    _ message: String,
+    item: String,
+    duration: Duration = CopyFeedback.confirmationDuration
+  ) {
     dismissTask?.cancel()
     self.message = message
     confirmingItem = item
 
     dismissTask = Task { [weak self] in
-      try? await Task.sleep(for: Self.confirmationDuration)
+      try? await Task.sleep(for: duration)
       guard !Task.isCancelled else { return }
       self?.message = nil
       self?.confirmingItem = nil

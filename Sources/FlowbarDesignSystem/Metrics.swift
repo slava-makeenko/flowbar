@@ -246,6 +246,33 @@ public enum Metrics {
     public static let emptyStateVerticalPadding: CGFloat = 34
   }
 
+  // MARK: - Снимки
+
+  /// Размеры ленты снимков.
+  public enum Screenshots {
+
+    /// Отступ над блоком шорткатов захвата.
+    public static let hintsTopPadding: CGFloat = 13
+
+    /// Отступ под надзаголовком блока шорткатов.
+    public static let hintsLabelBottomPadding: CGFloat = 9
+
+    /// Высота строки шортката.
+    public static let hintRowHeight: CGFloat = 30
+
+    /// Зазор между чипом и подписью шортката.
+    public static let hintSpacing: CGFloat = 12
+
+    /// Отступ над именем файла на карточке.
+    public static let metaTopPadding: CGFloat = 9
+
+    /// Отступ над подписью с размерами.
+    public static let captionTopPadding: CGFloat = 4
+
+    /// Высота пустого состояния ленты.
+    public static let emptyHeight: CGFloat = 181
+  }
+
   // MARK: - Переводчик
 
   /// Размеры экрана перевода.

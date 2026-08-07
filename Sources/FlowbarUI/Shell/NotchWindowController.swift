@@ -13,6 +13,7 @@ public final class NotchWindowController {
 
   private let state: ShellState
   private let clipboard: ClipboardViewModel
+  private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
   private let feedback: CopyFeedback
@@ -38,6 +39,7 @@ public final class NotchWindowController {
   /// - Parameters:
   ///   - state: состояние оболочки.
   ///   - clipboard: вью-модель истории копирований.
+  ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
   ///   - feedback: подтверждение копирования.
@@ -45,6 +47,7 @@ public final class NotchWindowController {
   public init(
     state: ShellState,
     clipboard: ClipboardViewModel,
+    screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
     snippets: SnippetsViewModel,
     feedback: CopyFeedback,
@@ -52,6 +55,7 @@ public final class NotchWindowController {
   ) {
     self.state = state
     self.clipboard = clipboard
+    self.screenshots = screenshots
     self.translate = translate
     self.snippets = snippets
     self.feedback = feedback
@@ -94,6 +98,7 @@ public final class NotchWindowController {
       geometry: geometry,
       state: state,
       clipboard: clipboard,
+      screenshots: screenshots,
       translate: translate,
       snippets: snippets,
       feedback: feedback,
