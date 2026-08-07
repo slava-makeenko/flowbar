@@ -11,4 +11,6 @@ echo "$files" | tr '\n' '\0' | xargs -0 xcrun swift-format lint --strict
 echo "$files" | tr '\n' '\0' | xargs -0 git add
 
 # Компилятор границы слоёв не держит целиком: ADR-0007.
-"$(git rev-parse --show-toplevel)/Scripts/check-layers.sh"
+root="$(git rev-parse --show-toplevel)"
+"$root/Scripts/check-layers.sh"
+"$root/Scripts/check-tokens.sh"

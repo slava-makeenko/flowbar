@@ -16,6 +16,9 @@ jobs:
       - name: Границы слоёв
         run: Scripts/check-layers.sh
 
+      - name: Токены
+        run: Scripts/check-tokens.sh
+
       - name: Сборка
         run: swift build
 
