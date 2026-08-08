@@ -31,13 +31,13 @@ struct PlayerView: View {
           .foregroundStyle(Palette.muted)
           .padding(.bottom, Metrics.Player.sourceBottomSpacing)
 
-        Text(model.track?.title ?? "Ничего не играет")
+        Text(model.title)
           .typeStyle(.trackTitle)
           .foregroundStyle(Palette.fg)
           .lineLimit(2)
           .padding(.bottom, Metrics.Player.titleBottomSpacing)
 
-        Text(model.track?.artist ?? "")
+        Text(model.artist)
           .typeStyle(.listRow)
           .foregroundStyle(Palette.muted)
           .lineLimit(1)

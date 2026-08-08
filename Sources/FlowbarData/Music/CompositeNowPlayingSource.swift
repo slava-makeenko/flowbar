@@ -26,13 +26,17 @@ public struct CompositeNowPlayingSource: NowPlayingReading, PlaybackControlling,
     self.controller = controller
   }
 
-  /// Первый источник, который отдал трек.
-  /// - Returns: трек или `nil`, если метаданных нет ни у кого.
-  public func currentTrack() async -> Track? {
+  /// Первый источник, которому есть что сказать.
+  ///
+  /// Порядок значим: сначала спрашиваются те, кто знает трек целиком, и лишь в конце —
+  /// тот, кто знает только имя приложения. Иначе беднейший ответ вытеснял бы полный.
+  /// - Returns: что звучит; `.silence`, если не знает никто.
+  public func current() async -> NowPlaying {
     for source in metadataSources {
-      if let track = await source.currentTrack() { return track }
+      let answer = await source.current()
+      if answer != .silence { return answer }
     }
-    return nil
+    return .silence
   }
 
   /// Первый источник, который отдал позицию.

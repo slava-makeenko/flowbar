@@ -40,6 +40,23 @@ public struct Track: Equatable, Sendable {
   }
 }
 
+/// Что сейчас звучит в системе.
+///
+/// Три случая, а не «трек или `nil`»: публичные API macOS позволяют узнать, какое
+/// приложение выводит звук, даже когда метаданных трека получить неоткуда. Приватный
+/// `MediaRemote`, которым пользуется системный виджет, закрыт с macOS 15.4 — ADR-0010.
+public enum NowPlaying: Equatable, Sendable {
+
+  /// Известен трек целиком.
+  case track(Track)
+
+  /// Известно только приложение, которое выводит звук.
+  case application(name: String)
+
+  /// Ничего не звучит.
+  case silence
+}
+
 /// Позиция воспроизведения внутри трека.
 public struct PlaybackPosition: Equatable, Sendable {
 

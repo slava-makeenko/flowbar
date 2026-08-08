@@ -37,5 +37,12 @@ let package = Package(
       name: "FlowbarDomainTests",
       dependencies: ["FlowbarDomain", "FlowbarTestSupport"]
     ),
+
+    // Композит выбора источника — единственная логика в слое данных, которая
+    // заслуживает юнит-теста: регламент §9 требует его явно.
+    .testTarget(
+      name: "FlowbarDataTests",
+      dependencies: ["FlowbarData", "FlowbarTestSupport"]
+    ),
   ]
 )

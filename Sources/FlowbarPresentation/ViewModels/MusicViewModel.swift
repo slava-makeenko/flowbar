@@ -9,8 +9,8 @@ public final class MusicViewModel {
   /// Как часто обновляются метаданные и позиция.
   public static let refreshInterval: Duration = .seconds(1)
 
-  /// Играющий трек; `nil` — метаданных нет.
-  public private(set) var track: Track?
+  /// Что сейчас звучит.
+  public private(set) var nowPlaying: NowPlaying = .silence
 
   /// Позиция внутри трека; `nil` — источник её не отдаёт.
   ///
@@ -29,7 +29,7 @@ public final class MusicViewModel {
     }
   }
 
-  private let nowPlaying: any NowPlayingReading
+  private let source: any NowPlayingReading
   private let playback: any PlaybackControlling
   private let seeking: any PlaybackSeeking
   private let volumeControl: any SystemVolumeControlling
@@ -46,7 +46,7 @@ public final class MusicViewModel {
     seeking: any PlaybackSeeking,
     volumeControl: any SystemVolumeControlling
   ) {
-    self.nowPlaying = nowPlaying
+    self.source = nowPlaying
     self.playback = playback
     self.seeking = seeking
     self.volumeControl = volumeControl
@@ -58,7 +58,7 @@ public final class MusicViewModel {
     outputDevice = await volumeControl.outputDeviceName()
 
     while !Task.isCancelled {
-      track = await nowPlaying.currentTrack()
+      nowPlaying = await source.current()
       position = await seeking.position()
       try? await Task.sleep(for: Self.refreshInterval)
     }
@@ -86,9 +86,28 @@ public final class MusicViewModel {
     await seeking.seek(to: position.duration * min(max(fraction, 0), 1))
   }
 
-  /// Подпись источника метаданных.
+  /// Мелкая подпись над названием: откуда идёт звук.
   public var sourceTitle: String {
-    track?.source ?? "Источник без метаданных"
+    switch nowPlaying {
+    case .track(let track): track.source
+    case .application: "воспроизводится"
+    case .silence: "источник не найден"
+    }
+  }
+
+  /// Крупная строка: название трека, имя приложения или прочерк.
+  public var title: String {
+    switch nowPlaying {
+    case .track(let track): track.title
+    case .application(let name): name
+    case .silence: "Ничего не играет"
+    }
+  }
+
+  /// Исполнитель; пуст, когда известно только приложение.
+  public var artist: String {
+    guard case .track(let track) = nowPlaying else { return "" }
+    return track.artist
   }
 
   /// Время в формате `м:сс`.

@@ -96,19 +96,21 @@ public struct ScriptingBridgeAdapter: NowPlayingReading, PlaybackSeeking {
     self.player = player
   }
 
-  /// Текущий трек.
-  /// - Returns: трек или `nil`, если приложение не запущено или ничего не играет.
-  public func currentTrack() async -> Track? {
+  /// Что звучит в этом приложении.
+  /// - Returns: трек или `.silence`, если приложение не запущено либо молчит.
+  public func current() async -> NowPlaying {
     guard let application = running(), let track = application.currentTrack,
       let name = track.name, !name.isEmpty
-    else { return nil }
+    else { return .silence }
 
     let duration = (track.duration ?? 0) / player.durationScale
-    return Track(
-      title: name,
-      artist: track.artist ?? "",
-      duration: duration > 0 ? duration : nil,
-      source: player.title
+    return .track(
+      Track(
+        title: name,
+        artist: track.artist ?? "",
+        duration: duration > 0 ? duration : nil,
+        source: player.title
+      )
     )
   }
 

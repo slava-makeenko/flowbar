@@ -113,8 +113,15 @@ final class CompositionRoot {
   private static func makeMusicViewModel() -> MusicViewModel {
     let music = ScriptingBridgeAdapter(player: .music)
     let spotify = ScriptingBridgeAdapter(player: .spotify)
+    // Порядок от богатого ответа к бедному: полные метаданные плеера, затем название
+    // вкладки браузера, затем просто имя приложения, выводящего звук. ADR-0010.
     let source = CompositeNowPlayingSource(
-      metadataSources: [music, spotify],
+      metadataSources: [
+        music,
+        spotify,
+        BrowserNowPlayingAdapter(),
+        AudioProcessNowPlayingAdapter(),
+      ],
       seekingSources: [music, spotify],
       controller: MediaKeyAdapter()
     )
