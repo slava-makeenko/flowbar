@@ -28,6 +28,24 @@ public struct ImageRule: ClipKindRule {
   }
 }
 
+/// Строка целиком распознаётся как адрес электронной почты.
+///
+/// Стоит **до** `LinkRule`: `NSDataDetector` считает адрес почты ссылкой, и без этого
+/// правила `slava@example.com` попадал бы в историю с иконкой цепочки.
+public struct EmailRule: ClipKindRule {
+
+  /// Создаёт правило.
+  public init() {}
+
+  /// Отдаёт `.email` для строки вида `name@example.com`.
+  /// - Parameter item: снимок пастборда.
+  /// - Returns: вид или `nil`.
+  public func kind(for item: PasteboardItem) -> ClipKind? {
+    guard let text = item.text?.trimmed(), !text.isEmpty else { return nil }
+    return text.wholeMatch(of: /[^\s@]+@[^\s@]+\.[^\s@]+/) != nil ? .email : nil
+  }
+}
+
 /// Строка целиком распознаётся как ссылка.
 public struct LinkRule: ClipKindRule {
 

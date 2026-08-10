@@ -34,6 +34,9 @@ public struct PasteboardItem: Equatable, Sendable {
   /// Растр, если в пастборде лежит изображение.
   public let imageData: Data?
 
+  /// Размер растра в пикселях. Считает адаптер: домен картинки не разбирает.
+  public let imagePixelSize: PixelSize?
+
   /// Содержимое помечено как конфиденциальное — `org.nspasteboard.ConcealedType`.
   ///
   /// Так менеджеры паролей помечают то, что не должно попадать в истории копирований.
@@ -50,6 +53,7 @@ public struct PasteboardItem: Equatable, Sendable {
   ///   - text: текстовое представление.
   ///   - fileURL: ссылка на файл.
   ///   - imageData: растр.
+  ///   - imagePixelSize: размер растра.
   ///   - isConcealed: пометка конфиденциальности.
   ///   - isTransient: пометка временности.
   ///   - sourceApp: приложение-источник.
@@ -57,6 +61,7 @@ public struct PasteboardItem: Equatable, Sendable {
     text: String? = nil,
     fileURL: URL? = nil,
     imageData: Data? = nil,
+    imagePixelSize: PixelSize? = nil,
     isConcealed: Bool = false,
     isTransient: Bool = false,
     sourceApp: SourceApp
@@ -64,6 +69,7 @@ public struct PasteboardItem: Equatable, Sendable {
     self.text = text
     self.fileURL = fileURL
     self.imageData = imageData
+    self.imagePixelSize = imagePixelSize
     self.isConcealed = isConcealed
     self.isTransient = isTransient
     self.sourceApp = sourceApp

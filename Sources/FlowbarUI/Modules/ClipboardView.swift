@@ -29,7 +29,7 @@ struct ClipboardView: View {
   private func row(for clip: ClipItem) -> some View {
     ListRow(
       systemImage: clip.kind.systemImage,
-      title: clip.preview,
+      title: model.title(for: clip),
       isTitleMonospaced: clip.kind.prefersMonospacedPreview,
       metaLead: clip.kind.title,
       metaRest: model.caption(for: clip),
@@ -59,6 +59,7 @@ extension ClipKind {
     case .address: "mappin.and.ellipse"
     case .path: "folder"
     case .value: "number.square"
+    case .email: "envelope"
     }
   }
 }

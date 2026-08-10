@@ -32,8 +32,9 @@ public actor SQLiteClipStore: ClipStoring {
   public func save(_ item: ClipItem) {
     let sql = """
       INSERT OR REPLACE INTO clips
-        (id, kind, preview, payload_kind, payload_value, source_app, captured_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+        (id, kind, preview, payload_kind, payload_value, source_app, captured_at,
+         pixel_width, pixel_height)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       """
     withStatement(sql) { statement in
       let payload = Self.encode(item.payload)
@@ -44,6 +45,13 @@ public actor SQLiteClipStore: ClipStoring {
       bind(statement, 5, payload.value)
       bind(statement, 6, item.sourceApp)
       sqlite3_bind_double(statement, 7, item.capturedAt.timeIntervalSince1970)
+      if let size = item.pixelSize {
+        sqlite3_bind_int(statement, 8, Int32(size.width))
+        sqlite3_bind_int(statement, 9, Int32(size.height))
+      } else {
+        sqlite3_bind_null(statement, 8)
+        sqlite3_bind_null(statement, 9)
+      }
       sqlite3_step(statement)
     }
   }
@@ -93,6 +101,11 @@ public actor SQLiteClipStore: ClipStoring {
       CREATE INDEX IF NOT EXISTS clips_captured_at ON clips (captured_at);
       """
     sqlite3_exec(database, sql, nil, nil, nil)
+
+    // Размер картинки добавился позже. У созданной заново базы колонки уже есть,
+    // у существующей их надо дописать — повторный ALTER просто вернёт ошибку.
+    sqlite3_exec(database, "ALTER TABLE clips ADD COLUMN pixel_width INTEGER", nil, nil, nil)
+    sqlite3_exec(database, "ALTER TABLE clips ADD COLUMN pixel_height INTEGER", nil, nil, nil)
   }
 
   private func query(
@@ -146,13 +159,17 @@ public actor SQLiteClipStore: ClipStoring {
       ? .imageFile(URL(fileURLWithPath: text(4)))
       : .string(text(4))
 
+    let width = Int(sqlite3_column_int(statement, 7))
+    let height = Int(sqlite3_column_int(statement, 8))
+
     return ClipItem(
       id: id,
       kind: kind,
       preview: text(2),
       payload: payload,
       sourceApp: text(5),
-      capturedAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 6))
+      capturedAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 6)),
+      pixelSize: width > 0 && height > 0 ? PixelSize(width: width, height: height) : nil
     )
   }
 }

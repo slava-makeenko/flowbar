@@ -29,6 +29,9 @@ public enum ClipKind: String, CaseIterable, Sendable {
 
   /// Идентификатор, хеш или токен — строка без пробелов, читаемая как значение.
   case value
+
+  /// Адрес электронной почты.
+  case email
 }
 
 /// Полезная нагрузка записи в истории.
@@ -62,6 +65,12 @@ public struct ClipItem: Identifiable, Equatable, Sendable {
   /// Момент попадания в историю.
   public let capturedAt: Date
 
+  /// Размер изображения в пикселях — только у копий-картинок.
+  ///
+  /// Без него строка картинки в списке пуста: превью взять неоткуда, а показывать
+  /// иконку рядом с пустотой — значит занимать место ничем.
+  public let pixelSize: PixelSize?
+
   /// Создаёт запись истории.
   /// - Parameters:
   ///   - id: идентификатор записи.
@@ -70,13 +79,15 @@ public struct ClipItem: Identifiable, Equatable, Sendable {
   ///   - payload: содержимое для обратной записи в пастборд.
   ///   - sourceApp: имя приложения-источника.
   ///   - capturedAt: момент попадания в историю.
+  ///   - pixelSize: размер изображения, если копия — картинка.
   public init(
     id: UUID,
     kind: ClipKind,
     preview: String,
     payload: ClipPayload,
     sourceApp: String,
-    capturedAt: Date
+    capturedAt: Date,
+    pixelSize: PixelSize? = nil
   ) {
     self.id = id
     self.kind = kind
@@ -84,5 +95,6 @@ public struct ClipItem: Identifiable, Equatable, Sendable {
     self.payload = payload
     self.sourceApp = sourceApp
     self.capturedAt = capturedAt
+    self.pixelSize = pixelSize
   }
 }

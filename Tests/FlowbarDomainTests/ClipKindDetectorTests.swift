@@ -54,10 +54,15 @@ struct KindSample: Sendable, CustomStringConvertible {
       item: PasteboardItem(text: "9f2c4a8e10b7", sourceApp: terminal),
       expected: .value
     ),
+    KindSample(
+      description: "адрес почты",
+      item: PasteboardItem(text: "slava@sensorehab.com", sourceApp: notes),
+      expected: .email
+    ),
   ]
 }
 
-@Test("Вид копии определяется для всех восьми видов", arguments: KindSample.all)
+@Test("Вид копии определяется для всех девяти видов", arguments: KindSample.all)
 func detectsEveryKind(sample: KindSample) {
   let detector = ClipKindDetector()
 
@@ -76,6 +81,13 @@ func valueWinsOverCode() {
   let item = PasteboardItem(text: "9f2c4a8e10b7", sourceApp: KindSample.terminal)
 
   #expect(ClipKindDetector().detect(item) == .value)
+}
+
+@Test("Почта определяется раньше ссылки: детектор считает адрес ссылкой")
+func emailWinsOverLink() {
+  let item = PasteboardItem(text: "alex@sensorehab.com", sourceApp: KindSample.notes)
+
+  #expect(ClipKindDetector().detect(item) == .email)
 }
 
 @Test("Путь определяется раньше остальных правил")

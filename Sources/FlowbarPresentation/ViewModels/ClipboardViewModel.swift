@@ -61,6 +61,17 @@ public final class ClipboardViewModel {
     feedback.confirm("Скопировано в буфер", item: clip.id.uuidString)
   }
 
+  /// Заголовок строки списка.
+  ///
+  /// У копии-картинки превью взять неоткуда: в пастборде лежит растр, а не текст.
+  /// Показывать пустую строку рядом с иконкой — значит занимать место ничем, поэтому
+  /// вместо неё идут размеры, как в макете.
+  public func title(for clip: ClipItem) -> String {
+    guard clip.preview.isEmpty else { return clip.preview }
+    guard let size = clip.pixelSize else { return clip.kind.title }
+    return "\(clip.kind.title) \(size.width) × \(size.height)"
+  }
+
   /// Подпись под превью: вид, источник и время.
   /// - Parameter clip: запись истории.
   /// - Returns: строка вида «Notes · 2 минуты назад».

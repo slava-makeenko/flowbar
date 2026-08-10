@@ -36,6 +36,7 @@ public struct NSPasteboardAdapter: PasteboardReading, PasteboardWriting {
       text: text,
       fileURL: fileURL,
       imageData: imageData,
+      imagePixelSize: imageData.flatMap(Self.pixelSize),
       isConcealed: types.contains(Self.concealed),
       isTransient: types.contains(Self.transient),
       sourceApp: frontmostApp()
@@ -59,6 +60,14 @@ public struct NSPasteboardAdapter: PasteboardReading, PasteboardWriting {
     pasteboard.clearContents()
     pasteboard.writeObjects([fileURL as NSURL])
     pasteboard.setData(image, forType: .png)
+  }
+
+  /// Размер растра в пикселях.
+  ///
+  /// Считается здесь, а не в домене: разбирать форматы изображений — работа AppKit.
+  private static func pixelSize(of data: Data) -> PixelSize? {
+    guard let representation = NSBitmapImageRep(data: data) else { return nil }
+    return PixelSize(width: representation.pixelsWide, height: representation.pixelsHigh)
   }
 
   private func frontmostApp() -> SourceApp {

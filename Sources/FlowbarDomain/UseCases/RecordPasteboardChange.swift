@@ -99,7 +99,8 @@ public actor RecordPasteboardChange {
       preview: Self.preview(for: item),
       payload: payload,
       sourceApp: item.sourceApp.name,
-      capturedAt: clock.now
+      capturedAt: clock.now,
+      pixelSize: item.imagePixelSize
     )
     await promoteOrSave(clip)
     return clip

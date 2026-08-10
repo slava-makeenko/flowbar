@@ -13,6 +13,7 @@ extension ClipKind {
     case .address: "Адрес"
     case .path: "Путь"
     case .value: "Значение"
+    case .email: "Почта"
     }
   }
 
@@ -20,7 +21,7 @@ extension ClipKind {
   public var prefersMonospacedPreview: Bool {
     switch self {
     case .path, .color, .value, .code: true
-    case .text, .link, .image, .address: false
+    case .text, .link, .image, .address, .email: false
     }
   }
 }

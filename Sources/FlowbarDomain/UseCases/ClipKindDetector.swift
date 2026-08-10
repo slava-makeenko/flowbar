@@ -23,9 +23,14 @@ public struct ClipKindDetector: Sendable {
   /// Спека объявляет восемь видов, но описывает семь правил — для `value` правила нет.
   /// `ValueRule` закрывает эту дыру: без него критерий приёмки «тип определяется верно для
   /// восьми видов» невыполним.
+  ///
+  /// `EmailRule` — девятый вид, заведённый по факту использования: в истории копирований
+  /// адреса почты оказались заметной долей и лежали с иконкой цепочки, потому что
+  /// `NSDataDetector` считает их ссылками.
   public static let defaultRules: [any ClipKindRule] = [
     FilePathRule(),
     ImageRule(),
+    EmailRule(),
     LinkRule(),
     ColorRule(),
     AddressRule(),
