@@ -21,6 +21,10 @@
   <key>LSMinimumSystemVersion</key>
   <string>15.0</string>
 
+  <!-- Иконка собирается Scripts/make-icon.swift из того же знака, что в рейле. -->
+  <key>CFBundleIconFile</key>
+  <string>Flowbar</string>
+
   <!-- Резидентная утилита: ни иконки в Dock, ни главного меню. Спека §2. -->
   <key>LSUIElement</key>
   <true/>

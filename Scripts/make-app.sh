@@ -17,6 +17,12 @@ mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 cp "$bin/Flowbar" "$bundle/Contents/MacOS/Flowbar"
 cp "$root/App/Resources/Info.plist" "$bundle/Contents/Info.plist"
 
+if [ -f "$root/App/Resources/Flowbar.icns" ]; then
+  cp "$root/App/Resources/Flowbar.icns" "$bundle/Contents/Resources/Flowbar.icns"
+else
+  echo "ВНИМАНИЕ: иконки нет. Собрать: swift Scripts/make-icon.swift" >&2
+fi
+
 if ls "$root/App/Resources/Fonts"/*.ttf >/dev/null 2>&1; then
   mkdir -p "$bundle/Contents/Resources/Fonts"
   cp "$root/App/Resources/Fonts"/*.ttf "$bundle/Contents/Resources/Fonts/"
