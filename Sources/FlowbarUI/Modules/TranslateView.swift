@@ -58,6 +58,11 @@ struct TranslateView: View {
           .typeStyle(.monoCaption)
           .foregroundStyle(Palette.muted)
         Spacer(minLength: 0)
+        Button("Вставить") { Task { await model.pasteFromPasteboard() } }
+          .buttonStyle(.plain)
+          .typeStyle(.captionSmall)
+          .foregroundStyle(Palette.fg2)
+          .accessibilityLabel("Вставить текст из буфера обмена")
         Button("Очистить") { model.clear() }
           .buttonStyle(.plain)
           .typeStyle(.captionSmall)

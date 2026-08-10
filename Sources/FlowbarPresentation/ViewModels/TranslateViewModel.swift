@@ -49,12 +49,12 @@ public final class TranslateViewModel {
 
   /// Исходный язык; `nil` — определять автоматически.
   public var sourceLanguage: Language? {
-    didSet { runNow() }
+    didSet { translateImmediately() }
   }
 
   /// Язык перевода.
   public var targetLanguage: Language {
-    didSet { runNow() }
+    didSet { translateImmediately() }
   }
 
   /// Переведённый текст.
@@ -75,6 +75,7 @@ public final class TranslateViewModel {
   private let translate: TranslateText
   private let languageDetector: any LanguageDetecting
   private let pasteboard: any PasteboardWriting
+  private let pasteboardReader: any PasteboardReading
   private let feedback: CopyFeedback
 
   private var debounceTask: Task<Void, Never>?
@@ -84,6 +85,7 @@ public final class TranslateViewModel {
   ///   - translate: юзкейс перевода с отменой предыдущего запроса.
   ///   - languageDetector: определитель языка.
   ///   - pasteboard: запись в пастборд.
+  ///   - pasteboardReader: чтение пастборда для кнопки вставки.
   ///   - feedback: подтверждение копирования.
   ///   - sourceLanguage: исходный язык по умолчанию.
   ///   - targetLanguage: язык перевода по умолчанию.
@@ -91,6 +93,7 @@ public final class TranslateViewModel {
     translate: TranslateText,
     languageDetector: any LanguageDetecting,
     pasteboard: any PasteboardWriting,
+    pasteboardReader: any PasteboardReading,
     feedback: CopyFeedback,
     sourceLanguage: Language? = nil,
     targetLanguage: Language = Language(code: "en")
@@ -98,6 +101,7 @@ public final class TranslateViewModel {
     self.translate = translate
     self.languageDetector = languageDetector
     self.pasteboard = pasteboard
+    self.pasteboardReader = pasteboardReader
     self.feedback = feedback
     self.sourceLanguage = sourceLanguage
     self.targetLanguage = targetLanguage
@@ -116,6 +120,25 @@ public final class TranslateViewModel {
     sourceLanguage = targetLanguage
     if let previousSource { targetLanguage = previousSource }
     sourceText = translatedText.isEmpty ? previousText : translatedText
+  }
+
+  /// Подставляет текст из пастборда и сразу переводит его.
+  ///
+  /// Перевод запускается без паузы: вставка — осознанное действие, ждать 700 мс после
+  /// неё незачем. Пауза нужна только чтобы не дёргать движок на каждой букве.
+  ///
+  /// Кнопка существует потому, что панель не забирает фокус: пока пользователь не кликнул
+  /// в поле, ⌘V уйдёт в приложение под панелью, а не в переводчик.
+  public func pasteFromPasteboard() async {
+    guard let item = await pasteboardReader.read(),
+      let text = item.text,
+      !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    else {
+      feedback.confirm("В буфере нет текста", item: "paste")
+      return
+    }
+    sourceText = text
+    translateImmediately()
   }
 
   /// Очищает оба поля.
@@ -154,7 +177,7 @@ public final class TranslateViewModel {
     }
   }
 
-  private func runNow() {
+  func translateImmediately() {
     debounceTask?.cancel()
     guard !sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
     debounceTask = Task { [weak self] in await self?.run() }

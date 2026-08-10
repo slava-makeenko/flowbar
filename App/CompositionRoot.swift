@@ -58,6 +58,7 @@ final class CompositionRoot {
       translate: TranslateText(translator: translator, languageDetector: NLLanguageDetector()),
       languageDetector: NLLanguageDetector(),
       pasteboard: pasteboard,
+      pasteboardReader: system,
       feedback: feedback,
       targetLanguage: Language(code: "en")
     )
