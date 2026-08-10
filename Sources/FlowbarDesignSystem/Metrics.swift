@@ -246,6 +246,22 @@ public enum Metrics {
     public static let emptyStateVerticalPadding: CGFloat = 34
   }
 
+  /// Размеры экрана настроек.
+  public enum Settings {
+
+    /// Отступ между разделами.
+    public static let sectionSpacing: CGFloat = 22
+
+    /// Отступ под заголовком раздела.
+    public static let headingBottomPadding: CGFloat = 10
+
+    /// Высота строки настройки.
+    public static let rowHeight: CGFloat = 32
+
+    /// Отступ над подписью-пояснением.
+    public static let noteTopPadding: CGFloat = 6
+  }
+
   // MARK: - Плеер
 
   /// Размеры экрана музыки.

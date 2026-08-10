@@ -11,6 +11,7 @@ public struct NotchShellView: View {
   private let geometry: NotchGeometry
   private let state: ShellState
   private let clipboard: ClipboardViewModel
+  private let settings: SettingsViewModel
   private let music: MusicViewModel
   private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
@@ -25,6 +26,7 @@ public struct NotchShellView: View {
   ///   - geometry: геометрия окна на текущем экране.
   ///   - state: состояние раскрытия и навигации.
   ///   - clipboard: вью-модель истории копирований.
+  ///   - settings: вью-модель настроек.
   ///   - music: вью-модель плеера.
   ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
@@ -35,6 +37,7 @@ public struct NotchShellView: View {
     geometry: NotchGeometry,
     state: ShellState,
     clipboard: ClipboardViewModel,
+    settings: SettingsViewModel,
     music: MusicViewModel,
     screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
@@ -45,6 +48,7 @@ public struct NotchShellView: View {
     self.geometry = geometry
     self.state = state
     self.clipboard = clipboard
+    self.settings = settings
     self.music = music
     self.screenshots = screenshots
     self.translate = translate
@@ -122,6 +126,9 @@ public struct NotchShellView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     case .snippets:
       SnippetsView(model: snippets)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    case .settings:
+      SettingsView(model: settings)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
   }

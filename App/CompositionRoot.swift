@@ -15,6 +15,9 @@ final class CompositionRoot {
   /// Как часто чистится история от записей старше срока жизни.
   private static let pruneInterval: Duration = .seconds(3600)
 
+  /// Срок хранения истории, пока пользователь его не менял.
+  private static let defaultHistoryLifetime = PruneExpiredClips.defaultLifetime
+
   private let clock: any Clock = SystemClock()
   private let shellState = ShellState()
   private let feedback = CopyFeedback()
@@ -26,6 +29,7 @@ final class CompositionRoot {
 
   /// Поднимает приложение.
   func start() {
+    let settingsStore = UserDefaultsSettingsStore(fallbackLifetime: Self.defaultHistoryLifetime)
     let clips = SQLiteClipStore(fileURL: Self.supportDirectory.appending(path: "clips.sqlite"))
     let blobs = FileSystemBlobStore(directory: Self.supportDirectory.appending(path: "clips"))
     let system = NSPasteboardAdapter()
@@ -66,6 +70,10 @@ final class CompositionRoot {
     let shell = NotchWindowController(
       state: shellState,
       clipboard: clipboard,
+      settings: SettingsViewModel(
+        launchAgent: ServiceManagementLaunchAgent(),
+        settings: settingsStore
+      ),
       music: Self.makeMusicViewModel(),
       screenshots: makeScreenshotsViewModel(pasteboard: pasteboard),
       translate: translate,
@@ -80,7 +88,10 @@ final class CompositionRoot {
     backgroundWork = [
       Task { await watcher.start() },
       Task { await clipboard.observe(watcher.recordedClips) },
-      Task { await Self.prunePeriodically(clips: clips, blobs: blobs, clock: clock) },
+      Task {
+        await Self.prunePeriodically(
+          clips: clips, blobs: blobs, clock: clock, settings: settingsStore)
+      },
     ]
   }
 
@@ -161,13 +172,18 @@ final class CompositionRoot {
   }
 
   /// Чистит историю на старте и дальше раз в час.
+  ///
+  /// Юзкейс создаётся на каждом круге, а не один раз: срок хранения можно поменять
+  /// в настройках, и новый должен вступить в силу без перезапуска.
   private static func prunePeriodically(
     clips: any ClipStoring,
     blobs: any BlobStoring,
-    clock: any Clock
+    clock: any Clock,
+    settings: any SettingsStoring
   ) async {
-    let prune = PruneExpiredClips(clips: clips, blobs: blobs, clock: clock)
     while !Task.isCancelled {
+      let prune = PruneExpiredClips(
+        clips: clips, blobs: blobs, clock: clock, lifetime: await settings.historyLifetime)
       await prune()
       try? await Task.sleep(for: pruneInterval)
     }

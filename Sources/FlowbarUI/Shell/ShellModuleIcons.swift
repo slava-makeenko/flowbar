@@ -12,6 +12,7 @@ extension ShellModule {
     case .translate: "character.bubble"
     case .music: "music.note"
     case .snippets: "bolt"
+    case .settings: "gearshape"
     }
   }
 }

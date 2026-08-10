@@ -13,7 +13,7 @@ struct RailView: View {
         .padding(.bottom, Metrics.Rail.logoBottomPadding)
 
       VStack(spacing: Metrics.Rail.buttonSpacing) {
-        ForEach(ShellModule.allCases) { module in
+        ForEach(ShellModule.modules) { module in
           RailButton(
             systemImage: module.systemImage,
             title: module.title,
@@ -28,9 +28,14 @@ struct RailView: View {
 
       Spacer(minLength: 0)
 
-      // Настройки в объём v1 не входят: кнопка нарисована, но ничего не делает — спека §1.
-      RailButton(systemImage: "gearshape", title: "Настройки", isSelected: false, action: {})
-        .disabled(true)
+      RailButton(
+        systemImage: ShellModule.settings.systemImage,
+        title: ShellModule.settings.title,
+        isSelected: state.activeModule == .settings
+      ) {
+        state.activeModule = .settings
+        state.pin()
+      }
     }
     .padding(.top, Metrics.Rail.topPadding)
     .padding(.bottom, Metrics.Rail.bottomPadding)
