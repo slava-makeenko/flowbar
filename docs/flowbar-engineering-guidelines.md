@@ -95,9 +95,9 @@ targets: [
 | `FileTrashing` | удаление в Корзину | `WorkspaceTrashAdapter` |
 | `TextTranslating` | перевод | `AppleTranslationAdapter`, `UnavailableTranslationAdapter` |
 | `LanguageDetecting` | определение языка | `NLLanguageDetector` |
-| `NowPlayingReading` | метаданные трека | `ScriptingBridgeAdapter`, `NullNowPlayingAdapter` |
-| `PlaybackControlling` | play/pause/next/prev | `ScriptingBridgeAdapter`, `MediaKeyAdapter` |
-| `PlaybackSeeking` | позиция в треке | `ScriptingBridgeAdapter` |
+| ~~`NowPlayingReading`~~ | метаданные трека | удалён, ADR-0011 |
+| ~~`PlaybackControlling`~~ | play/pause/next/prev | удалён, ADR-0011 |
+| ~~`PlaybackSeeking`~~ | позиция в треке | удалён, ADR-0011 |
 | `SystemVolumeControlling` | системная громкость | `CoreAudioVolumeAdapter` |
 | `SnippetStoring` | быстрые вставки | `JSONSnippetStore` |
 | `Clock` | текущее время | `SystemClock`, `FixedClock` в тестах |
@@ -107,6 +107,11 @@ targets: [
 ### 3.1 Где архитектура окупается прямо здесь
 
 Не абстрактная польза, а два конкретных места.
+
+> **Поправка от 2026-08-13 — [ADR-0011](adr/0011-remove-music-module.md).** Модуля музыки
+> в приложении больше нет. Примеры на `NowPlayingReading` ниже, а также разборы LSP и ISP
+> в §5, оставлены как **учебные**: они показывают, зачем узкие порты и почему контракт —
+> часть протокола. Искать эти типы в коде не надо, их там нет.
 
 **Музыка.** В спецификации это главный риск: способ получения метаданных не определён и может отвалиться с обновлением ОС (§8.4 спеки). Разделение на три узких порта делает риск локальным.
 
@@ -360,7 +365,7 @@ SwiftLint добавляется только для того, чего `swift-f
 - [ ] `Domain` не импортирует ничего, кроме `Foundation` (проверяется компилятором — см. §2.1)
 - [ ] Новый системный API обёрнут портом, конкретный тип не протёк в `Presentation`
 - [ ] Новый тип в `Domain` покрыт тестами; в фейках нет логики
-- [ ] Публичные объявления задокументированы, у контрактов с неочевидным поведением описан контракт (как в `NowPlayingReading`)
+- [ ] Публичные объявления задокументированы, у контрактов с неочевидным поведением описан контракт (как в `LaunchAtLoginControlling.setEnabled`: возвращает фактическое состояние, а не запрошенное)
 - [ ] Ни одного литерала цвета или размера вне `DesignSystem`
 - [ ] Нет новых синглтонов; зависимости пришли через инициализатор
 - [ ] Если заведён новый тип юзкейса — внутри есть решение, инвариант или два порта (§4)
