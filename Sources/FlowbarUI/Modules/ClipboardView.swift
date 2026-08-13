@@ -9,6 +9,12 @@ struct ClipboardView: View {
   @Bindable var model: ClipboardViewModel
 
   var body: some View {
+    // Загрузка висит на внешнем вью, а не на списке: список рисуется только когда
+    // история уже непустая, и `.task` на нём никогда бы не запустился после перезапуска.
+    content.task { await model.load() }
+  }
+
+  @ViewBuilder private var content: some View {
     if model.clips.isEmpty {
       Text("История пуста — скопируйте что-нибудь")
         .typeStyle(.cardTitle)
@@ -22,7 +28,6 @@ struct ClipboardView: View {
           }
         }
       }
-      .task { await model.load() }
     }
   }
 
