@@ -10,7 +10,6 @@ extension ShellModule {
     case .clipboard: "list.clipboard"
     case .screenshots: "camera.viewfinder"
     case .translate: "character.bubble"
-    case .music: "music.note"
     case .snippets: "bolt"
     case .settings: "gearshape"
     }

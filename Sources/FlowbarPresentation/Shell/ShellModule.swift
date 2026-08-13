@@ -12,9 +12,6 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
   /// Переводчик.
   case translate
 
-  /// Плеер системного аудио.
-  case music
-
   /// Быстрые вставки.
   case snippets
 
@@ -25,7 +22,7 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
   ///
   /// Настройки в неё не входят: они прижаты к низу рейла отдельно, как в макете.
   public static let modules: [ShellModule] = [
-    .clipboard, .screenshots, .translate, .music, .snippets,
+    .clipboard, .screenshots, .translate, .snippets,
   ]
 
   /// Идентификатор для списков.
@@ -37,7 +34,6 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
     case .clipboard: "Буфер"
     case .screenshots: "Снимки"
     case .translate: "Перевод"
-    case .music: "Музыка"
     case .snippets: "Вставки"
     case .settings: "Настройки"
     }
@@ -48,7 +44,7 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
     switch self {
     case .clipboard: "⌘⇧V"
     case .translate: "⌥T"
-    case .screenshots, .music, .snippets, .settings: nil
+    case .screenshots, .snippets, .settings: nil
     }
   }
 }

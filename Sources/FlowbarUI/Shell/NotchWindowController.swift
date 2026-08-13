@@ -14,7 +14,6 @@ public final class NotchWindowController {
   private let state: ShellState
   private let clipboard: ClipboardViewModel
   private let settings: SettingsViewModel
-  private let music: MusicViewModel
   private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
@@ -42,7 +41,6 @@ public final class NotchWindowController {
   ///   - state: состояние оболочки.
   ///   - clipboard: вью-модель истории копирований.
   ///   - settings: вью-модель настроек.
-  ///   - music: вью-модель плеера.
   ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
@@ -52,7 +50,6 @@ public final class NotchWindowController {
     state: ShellState,
     clipboard: ClipboardViewModel,
     settings: SettingsViewModel,
-    music: MusicViewModel,
     screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
     snippets: SnippetsViewModel,
@@ -62,7 +59,6 @@ public final class NotchWindowController {
     self.state = state
     self.clipboard = clipboard
     self.settings = settings
-    self.music = music
     self.screenshots = screenshots
     self.translate = translate
     self.snippets = snippets
@@ -119,7 +115,6 @@ public final class NotchWindowController {
       state: state,
       clipboard: clipboard,
       settings: settings,
-      music: music,
       screenshots: screenshots,
       translate: translate,
       snippets: snippets,

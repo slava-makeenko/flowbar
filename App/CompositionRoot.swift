@@ -74,7 +74,6 @@ final class CompositionRoot {
         launchAgent: ServiceManagementLaunchAgent(),
         settings: settingsStore
       ),
-      music: Self.makeMusicViewModel(),
       screenshots: makeScreenshotsViewModel(pasteboard: pasteboard),
       translate: translate,
       snippets: makeSnippetsViewModel(pasteboard: pasteboard),
@@ -118,31 +117,6 @@ final class CompositionRoot {
       shell.makeKey()
       translate.requestInputFocus()
     }
-  }
-
-  /// Метаданные берутся у Music.app и Spotify, управление — медиа-клавишами.
-  /// ADR-0002: путь A закрыт приватным entitlement, путь C один не даёт метаданных.
-  private static func makeMusicViewModel() -> MusicViewModel {
-    let music = ScriptingBridgeAdapter(player: .music)
-    let spotify = ScriptingBridgeAdapter(player: .spotify)
-    // Порядок от богатого ответа к бедному: полные метаданные плеера, затем название
-    // вкладки браузера, затем просто имя приложения, выводящего звук. ADR-0010.
-    let source = CompositeNowPlayingSource(
-      metadataSources: [
-        music,
-        spotify,
-        BrowserNowPlayingAdapter(),
-        AudioProcessNowPlayingAdapter(),
-      ],
-      seekingSources: [music, spotify],
-      controller: MediaKeyAdapter()
-    )
-    return MusicViewModel(
-      nowPlaying: source,
-      playback: source,
-      seeking: source,
-      volumeControl: CoreAudioVolumeAdapter()
-    )
   }
 
   private func makeScreenshotsViewModel(

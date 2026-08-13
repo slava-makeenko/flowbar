@@ -32,9 +32,5 @@
   <!-- Шрифт бандлится: Inter Variable под SIL OFL 1.1. Спека §5. -->
   <key>ATSApplicationFontsPath</key>
   <string>Fonts</string>
-
-  <!-- Метаданные трека из Music.app и Spotify через ScriptingBridge. ADR-0002. -->
-  <key>NSAppleEventsUsageDescription</key>
-  <string>Flowbar читает название и обложку трека из Music.app и Spotify, чтобы показать их в плеере.</string>
 </dict>
 </plist>

@@ -10,9 +10,5 @@
        дальше доступ живёт в security-scoped bookmark. Спека §10. -->
   <key>com.apple.security.files.user-selected.read-write</key>
   <true/>
-
-  <!-- ScriptingBridge к Music.app и Spotify. ADR-0002. -->
-  <key>com.apple.security.automation.apple-events</key>
-  <true/>
 </dict>
 </plist>
