@@ -121,7 +121,7 @@ extension NSScreen {
 }
 ```
 
-Ширина свёрнутой пилюли = `max(notchWidth ?? 0, 218)`. На Mac без выреза (внешний монитор, старые модели) вырез отсутствует — пилюля просто висит по центру верха экрана шириной 218.
+Ширина свёрнутой пилюли = `max((notchWidth ?? 0) + 2 × 14, 218)`: крыло слева от выреза не уже 14 pt, чтобы индикатору агентов было где стоять (ADR-0013). На Mac без выреза (внешний монитор, старые модели) вырез отсутствует — пилюля просто висит по центру верха экрана шириной 218.
 
 Отслеживать нужно `NSApplication.didChangeScreenParametersNotification` и пересоздавать/перепозиционировать окно: пользователь подключает монитор, меняет разрешение, закрывает крышку.
 
@@ -236,7 +236,8 @@ extension NSFont {
 
 | Элемент | Значение |
 |---|---|
-| Пилюля свёрнутая | `max(notchWidth, 218) × 38`, радиус `0 0 20 20` |
+| Пилюля свёрнутая | `max(notchWidth + 2 × 14, 218) × 38`, радиус `0 0 20 20`. Слагаемое `2 × 14` — минимальное крыло под индикатор агентов, ADR-0013; на Mac16,7 не срабатывает |
+| Индикатор агентов | точки 6 pt в левом крыле свёрнутой пилюли, столбиком с зазором 5; пульсация прозрачности 1 → 0,65, период 1,6 с — §8.6 |
 | Пилюля развёрнутая | `760 × 38`, радиус 0 |
 | Панель | `760 × 380`, радиус `0 0 22 22` |
 | Полная высота развёрнутого блока | **418** |
@@ -465,6 +466,21 @@ struct Snippet: Identifiable, Codable {
 
 Плейсхолдер поля меняется вместе с выбранным типом: `name@example.com` / `#design-review` / `+7 900 000-00-00`.
 
+### 8.6 Лимиты агентов и индикатор работы
+
+Решения и замеры — ADR-0012 (лимиты) и ADR-0013 (индикатор).
+
+**Экран «Лимиты».** Пятый пункт рейла. Для Claude Code и Codex — окна лимита (5 часов, неделя): израсходованная доля, время сброса, полоса, возраст снимка. Полосы — в цвете агента, как его точка в пилюле; от 90 % подпись и полоса — `danger`.
+
+| Агент | Источник | Пустое состояние |
+|---|---|---|
+| Codex | последняя запись `rate_limits` в свежем `~/.codex/sessions/**/rollout-*.jsonl` | «Codex запишет лимиты на первом ходу сессии» |
+| Claude Code | `~/.claude/flowbar-usage.json`, который пишет statusLine-команда | кнопка «Скопировать настройку» кладёт в буфер блок `statusLine` для `settings.json` |
+
+Доступ к `~/.claude` и `~/.codex` — security-scoped bookmark, выбор папки один раз. Выбор чужой папки не сохраняется: папка узнаётся по каталогу транскриптов внутри. Файлы читаются при открытии экрана и раз в 10 с, пока он открыт.
+
+**Индикатор в пилюле.** Агент считается работающим 20 с после последней записи в транскрипт (`~/.claude/projects`, `~/.codex/sessions`), наблюдение — FSEvents. Точка: Claude Code — `#D97757`, Codex — `#4C8DFF`; оба — столбиком, Claude сверху. Только в свёрнутом виде. Никто не работает — в крыле пусто. Без выданного доступа индикатор молчит.
+
 ---
 
 ## 9. Глобальные хоткеи
@@ -512,7 +528,8 @@ struct Snippet: Identifiable, Codable {
 - Крестик появляется по hover **и по фокусу** карточки — иначе с клавиатуры удалить нельзя.
 - Тост — `accessibilityAnnouncement`, чтобы озвучивался результат копирования.
 - Фокус: видимое кольцо на всех интерактивных элементах, `accent` с прозрачностью 30% толщиной 2.
-- Reduce Motion — см. §7.
+- Reduce Motion — см. §7. Точка агента в пилюле при нём горит ровно, без пульсации.
+- Индикатор агентов — один элемент с меткой «Claude Code работает», «Codex работает» или «Claude Code и Codex работают»; когда никто не работает, его нет в дереве.
 - Increase Contrast (`accessibilityDisplayShouldIncreaseContrast`) — поднимать `border` с 8% до 20%, `borderSoft` с 5% до 12%.
 
 ---
@@ -528,10 +545,11 @@ Flowbar/
 │
 ├─ Sources/
 │  ├─ FlowbarDomain/                // импортирует только Foundation
-│  │  ├─ Entities/                  // ClipItem, Screenshot, Snippet, Track
+│  │  ├─ Entities/                  // ClipItem, Screenshot, Snippet, AgentUsage
 │  │  ├─ Ports/                     // протоколы из регламента §3
 │  │  └─ UseCases/                  // RecordPasteboardChange, PruneExpiredClips,
-│  │                                // AddSnippet, TranslateText, CopyScreenshot
+│  │                                // AddSnippet, TranslateText, CopyScreenshot,
+│  │                                // AgentUsageParser, AgentActivity
 │  │
 │  ├─ FlowbarData/                  // реализации портов
 │  │  ├─ Pasteboard/                // NSPasteboardAdapter
@@ -541,7 +559,9 @@ Flowbar/
 │  │  ├─ Translation/               // AppleTranslationAdapter, UnavailableTranslationAdapter
 │  │  ├─ Music/                     // ScriptingBridgeAdapter, MediaKeyAdapter,
 │  │  │                             // CompositeNowPlayingSource, CoreAudioVolumeAdapter
-│  │  └─ Snippets/                  // JSONSnippetStore
+│  │  ├─ Snippets/                  // JSONSnippetStore
+│  │  └─ Agents/                    // AgentFolderAccess, FileAgentUsageReader,
+│  │                                // FSEventsAgentActivitySource
 │  │
 │  ├─ FlowbarPresentation/          // импортирует только Domain
 │  │  ├─ Shell/                     // ShellState: isExpanded, isPinned, activeModule
@@ -556,9 +576,9 @@ Flowbar/
 │  │
 │  ├─ FlowbarUI/                    // SwiftUI + AppKit-оболочка
 │  │  ├─ Shell/                     // NotchPanel, ShapeHitTestView, NotchGeometry,
-│  │  │                             // NotchShellView — §3
+│  │  │                             // NotchShellView, AgentActivityIndicator — §3
 │  │  └─ Modules/                   // ClipboardView, ScreenshotStripView, TranslateView,
-│  │                                // PlayerView, SnippetsView
+│  │                                // SnippetsView, LimitsView
 │  │
 │  └─ FlowbarTestSupport/           // фейки портов для тестов
 │
@@ -613,11 +633,14 @@ Flowbar/
 - [ ] Перевод стартует через 700 мс после остановки ввода; быстрый повторный ввод отменяет предыдущий запрос
 - [ ] Плеер управляет воспроизведением в приложении, которого нет в списке поддерживаемых
 - [ ] Невалидный email не добавляется и даёт понятное сообщение
+- [ ] Лимиты Codex видны сразу после выбора `~/.codex`, без установки чего-либо
+- [ ] Claude Code до установки statusLine честно показывает «нет данных», а не нули
+- [ ] Работа агента зажигает его точку в пилюле не позже чем через 2 с, тишина 20 с её гасит
 
 **Оформление**
 - [ ] Ни один текст не темнеет при наведении
 - [ ] Прописные набраны с трекингом +0.08em
-- [ ] Активный пункт рейла — единственное акцентное пятно на экране (кроме экрана вставок, где второе — кнопка «Добавить»)
+- [ ] Активный пункт рейла — единственное акцентное пятно на экране (кроме экрана вставок, где второе — кнопка «Добавить», и экрана лимитов, где полосы окрашены в цвета агентов)
 - [ ] При включённом Reduce Motion переходы мгновенные
 - [ ] Все кнопки достижимы с клавиатуры и показывают кольцо фокуса
 

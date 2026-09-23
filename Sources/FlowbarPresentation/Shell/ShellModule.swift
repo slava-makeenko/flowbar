@@ -15,6 +15,9 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
   /// Быстрые вставки.
   case snippets
 
+  /// Лимиты Claude Code и Codex.
+  case limits
+
   /// Настройки приложения.
   case settings
 
@@ -22,7 +25,7 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
   ///
   /// Настройки в неё не входят: они прижаты к низу рейла отдельно, как в макете.
   public static let modules: [ShellModule] = [
-    .clipboard, .screenshots, .translate, .snippets,
+    .clipboard, .screenshots, .translate, .snippets, .limits,
   ]
 
   /// Идентификатор для списков.
@@ -35,6 +38,7 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
     case .screenshots: "Снимки"
     case .translate: "Перевод"
     case .snippets: "Вставки"
+    case .limits: "Лимиты"
     case .settings: "Настройки"
     }
   }
@@ -44,7 +48,7 @@ public enum ShellModule: String, CaseIterable, Identifiable, Sendable {
     switch self {
     case .clipboard: "⌘⇧V"
     case .translate: "⌥T"
-    case .screenshots, .snippets, .settings: nil
+    case .screenshots, .snippets, .limits, .settings: nil
     }
   }
 }

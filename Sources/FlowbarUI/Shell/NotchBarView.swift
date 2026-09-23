@@ -7,6 +7,7 @@ struct NotchBarView: View {
 
   let geometry: NotchGeometry
   let state: ShellState
+  let activity: AgentActivityModel
 
   var body: some View {
     HStack(spacing: 0) {
@@ -22,6 +23,7 @@ struct NotchBarView: View {
       width: state.isExpanded ? geometry.expandedWidth : geometry.collapsedWidth,
       height: Metrics.Shell.barHeight
     )
+    .overlay(alignment: .leading) { agentIndicator }
     .background(geometry.bodyColor)
     .clipShape(
       .rect(
@@ -51,6 +53,20 @@ struct NotchBarView: View {
     }
     .buttonStyle(.plain)
     .accessibilityLabel(state.isPinned ? "Открепить панель" : "Закрепить панель")
+  }
+
+  /// Только в свёрнутом виде: в развёрнутой панели точки стали бы вторым акцентным пятном
+  /// рядом с активным пунктом рейла. Спека §14, ADR-0013.
+  @ViewBuilder private var agentIndicator: some View {
+    if !state.isExpanded && !activity.working.isEmpty {
+      AgentActivityIndicator(
+        agents: activity.working,
+        accessibilityLabel: activity.accessibilityLabel
+      )
+      .frame(width: geometry.leftWingWidth)
+      .allowsHitTesting(false)
+      .transition(.opacity)
+    }
   }
 
   private var collapseButton: some View {

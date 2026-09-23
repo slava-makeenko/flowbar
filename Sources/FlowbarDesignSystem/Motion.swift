@@ -21,6 +21,17 @@ public enum Motion {
   /// Смещение содержимого в начале появления.
   public static let contentOffsetY: CGFloat = -8
 
+  /// Половина периода пульсации точки агента: период 1,6 с, 0,6 Гц.
+  ///
+  /// Плавно, а не вкл/выкл: точка весь день в боковом зрении у камеры. И далеко от порога
+  /// WCAG 2.3.1 в три вспышки в секунду. ADR-0013.
+  public static let agentPulseHalfPeriod: TimeInterval = 0.8
+
+  /// Непрозрачность точки в провале пульсации.
+  ///
+  /// Ниже 0,65 оба цвета агентов теряют 3:1 на чёрном, нужные нетекстовому элементу.
+  public static let agentPulseDimmedOpacity: Double = 0.65
+
   /// Анимация разворота панели.
   /// - Parameter reduceMotion: включён ли Reduce Motion.
   /// - Returns: анимация или `nil` — переход без анимации.

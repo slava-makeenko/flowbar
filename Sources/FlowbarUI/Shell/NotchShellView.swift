@@ -15,6 +15,8 @@ public struct NotchShellView: View {
   private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
+  private let limits: LimitsViewModel
+  private let activity: AgentActivityModel
   private let feedback: CopyFeedback
   private let backgroundHosts: AnyView
 
@@ -29,6 +31,8 @@ public struct NotchShellView: View {
   ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
+  ///   - limits: вью-модель лимитов агентов.
+  ///   - activity: индикатор работы агентов.
   ///   - feedback: подтверждение копирования.
   ///   - backgroundHosts: невидимые вью, которым нужен доступ к системным сессиям.
   public init(
@@ -39,6 +43,8 @@ public struct NotchShellView: View {
     screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
     snippets: SnippetsViewModel,
+    limits: LimitsViewModel,
+    activity: AgentActivityModel,
     feedback: CopyFeedback,
     backgroundHosts: AnyView
   ) {
@@ -49,6 +55,8 @@ public struct NotchShellView: View {
     self.screenshots = screenshots
     self.translate = translate
     self.snippets = snippets
+    self.limits = limits
+    self.activity = activity
     self.feedback = feedback
     self.backgroundHosts = backgroundHosts
   }
@@ -56,7 +64,7 @@ public struct NotchShellView: View {
   /// Содержимое вью.
   public var body: some View {
     VStack(spacing: 0) {
-      NotchBarView(geometry: geometry, state: state)
+      NotchBarView(geometry: geometry, state: state, activity: activity)
       panel
     }
     .overlay(alignment: .top) { backgroundHosts }
@@ -119,6 +127,9 @@ public struct NotchShellView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     case .snippets:
       SnippetsView(model: snippets)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    case .limits:
+      LimitsView(model: limits)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     case .settings:
       SettingsView(model: settings)

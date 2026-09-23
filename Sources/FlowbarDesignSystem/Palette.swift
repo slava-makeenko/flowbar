@@ -86,6 +86,14 @@ public enum Palette {
 
   /// Ошибка: рамка невалидного поля, удаление.
   public static let danger = Color(hex: 0xDC26_26)
+
+  // MARK: - Агенты
+
+  /// Claude Code: точка в пилюле и полосы лимитов. 6,73:1 на чёрном.
+  public static let agentClaude = Color(hex: 0xD977_57)
+
+  /// Codex: точка в пилюле и полосы лимитов. 6,56:1 на чёрном.
+  public static let agentCodex = Color(hex: 0x4C8D_FF)
 }
 
 /// Заливки состояний.

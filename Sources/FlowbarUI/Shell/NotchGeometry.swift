@@ -28,6 +28,11 @@ public struct NotchGeometry: Equatable, Sendable {
   /// Ширина свёрнутой пилюли.
   public let collapsedWidth: CGFloat
 
+  /// Видимая ширина пилюли слева от выреза — место для индикатора агентов.
+  ///
+  /// На экране без выреза видна вся пилюля, и крыло — это свободное поле перед глазком.
+  public let leftWingWidth: CGFloat
+
   /// Ширина развёрнутой панели.
   public let expandedWidth: CGFloat
 
@@ -75,7 +80,12 @@ public struct NotchGeometry: Equatable, Sendable {
   /// - Returns: геометрия окна.
   public static func make(for screen: NSScreen) -> NotchGeometry {
     let notchWidth = screen.notchWidth
-    let collapsed = max(notchWidth ?? 0, Metrics.Shell.collapsedMinimumWidth)
+    // Крылья по бокам выреза не должны стать уже точки индикатора агентов. ADR-0013.
+    let collapsed = max(
+      (notchWidth ?? 0) + Metrics.Shell.agentWingMinimum * 2,
+      Metrics.Shell.collapsedMinimumWidth
+    )
+    let leftWing = notchWidth.map { (collapsed - $0) / 2 } ?? Metrics.Shell.agentWingMinimum
     let expanded = min(
       Metrics.Shell.expandedWidth,
       screen.frame.width - Metrics.Shell.horizontalScreenInset
@@ -94,6 +104,7 @@ public struct NotchGeometry: Equatable, Sendable {
     return NotchGeometry(
       hasNotch: notchWidth != nil,
       collapsedWidth: collapsed,
+      leftWingWidth: leftWing,
       expandedWidth: expanded,
       panelHeight: panelHeight,
       windowFrame: CGRect(

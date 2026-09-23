@@ -11,6 +11,7 @@ extension ShellModule {
     case .screenshots: "camera.viewfinder"
     case .translate: "character.bubble"
     case .snippets: "bolt"
+    case .limits: "gauge.with.dots.needle.33percent"
     case .settings: "gearshape"
     }
   }

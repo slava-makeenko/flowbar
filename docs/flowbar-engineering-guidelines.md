@@ -100,6 +100,9 @@ targets: [
 | ~~`PlaybackSeeking`~~ | позиция в треке | удалён, ADR-0011 |
 | `SystemVolumeControlling` | системная громкость | `CoreAudioVolumeAdapter` |
 | `SnippetStoring` | быстрые вставки | `JSONSnippetStore` |
+| `AgentFolderAccessing` | доступ к `~/.claude` и `~/.codex` | `AgentFolderAccess` |
+| `AgentUsageReading` | последний снимок лимитов агента | `FileAgentUsageReader` |
+| `AgentActivityObserving` | записи агента в транскрипты | `FSEventsAgentActivitySource` |
 | `Clock` | текущее время | `SystemClock`, `FixedClock` в тестах |
 
 `Clock` — не педантизм: чистка истории «старше 7 дней» иначе не тестируется без ожидания в неделю.

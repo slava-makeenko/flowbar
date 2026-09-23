@@ -67,6 +67,16 @@ final class CompositionRoot {
       targetLanguage: Language(code: "en")
     )
 
+    let activity = AgentActivityModel(observer: FSEventsAgentActivitySource(), clock: clock)
+    let limits = LimitsViewModel(
+      access: AgentFolderAccess(),
+      reader: FileAgentUsageReader(),
+      clock: clock,
+      pasteboard: pasteboard,
+      feedback: feedback,
+      onFolderGranted: { agent, folder in activity.watch(agent, in: folder) }
+    )
+
     let shell = NotchWindowController(
       state: shellState,
       clipboard: clipboard,
@@ -77,6 +87,8 @@ final class CompositionRoot {
       screenshots: makeScreenshotsViewModel(pasteboard: pasteboard),
       translate: translate,
       snippets: makeSnippetsViewModel(pasteboard: pasteboard),
+      limits: limits,
+      activity: activity,
       feedback: feedback,
       backgroundHosts: AnyView(TranslationSessionHost(adapter: translator))
     )
@@ -87,6 +99,8 @@ final class CompositionRoot {
     backgroundWork = [
       Task { await watcher.start() },
       Task { await clipboard.observe(watcher.recordedClips) },
+      // Закладки на папки агентов нужны индикатору в пилюле сразу, а не с открытия экрана.
+      Task { await limits.restoreAccess() },
       Task {
         await Self.prunePeriodically(
           clips: clips, blobs: blobs, clock: clock, settings: settingsStore)

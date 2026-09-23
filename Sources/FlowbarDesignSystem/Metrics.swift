@@ -97,6 +97,21 @@ public enum Metrics {
 
     /// Сторона индикатора активности.
     public static let liveDotSide: CGFloat = 6
+
+    /// Сторона точки работающего агента в левом крыле пилюли.
+    public static let agentDotSide: CGFloat = 6
+
+    /// Зазор между точками, когда работают оба агента.
+    ///
+    /// Точки стоят столбиком: в ряд две по 6 pt с зазором заняли бы почти всё крыло
+    /// в 16,5 pt и упёрлись бы в край выреза. ADR-0013.
+    public static let agentDotSpacing: CGFloat = 5
+
+    /// Минимальная видимая ширина крыла слева от выреза.
+    ///
+    /// Если вырез на другом железе окажется шире, пилюля расширится, чтобы точке было
+    /// где стоять. На Mac16,7 крыло 16,5 pt — ничего не меняется.
+    public static let agentWingMinimum: CGFloat = 14
   }
 
   // MARK: - Рейл
@@ -260,6 +275,30 @@ public enum Metrics {
 
     /// Отступ над подписью-пояснением.
     public static let noteTopPadding: CGFloat = 6
+  }
+
+  // MARK: - Лимиты
+
+  /// Размеры экрана лимитов агентов.
+  public enum Limits {
+
+    /// Отступ между агентами.
+    public static let sectionSpacing: CGFloat = 20
+
+    /// Отступ под заголовком агента.
+    public static let headingBottomPadding: CGFloat = 10
+
+    /// Отступ между окнами лимита.
+    public static let windowSpacing: CGFloat = 12
+
+    /// Высота полосы расхода.
+    public static let barHeight: CGFloat = 4
+
+    /// Отступ от подписи окна до полосы.
+    public static let barTopPadding: CGFloat = 6
+
+    /// Отступ над пояснением под кнопкой.
+    public static let noteTopPadding: CGFloat = 8
   }
 
   // MARK: - Плеер

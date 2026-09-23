@@ -17,6 +17,8 @@ public final class NotchWindowController {
   private let screenshots: ScreenshotsViewModel
   private let translate: TranslateViewModel
   private let snippets: SnippetsViewModel
+  private let limits: LimitsViewModel
+  private let activity: AgentActivityModel
   private let feedback: CopyFeedback
   private let backgroundHosts: AnyView
 
@@ -44,6 +46,8 @@ public final class NotchWindowController {
   ///   - screenshots: вью-модель ленты снимков.
   ///   - translate: вью-модель перевода.
   ///   - snippets: вью-модель быстрых вставок.
+  ///   - limits: вью-модель лимитов агентов.
+  ///   - activity: индикатор работы агентов.
   ///   - feedback: подтверждение копирования.
   ///   - backgroundHosts: невидимые вью, которым нужен доступ к системным сессиям.
   public init(
@@ -53,6 +57,8 @@ public final class NotchWindowController {
     screenshots: ScreenshotsViewModel,
     translate: TranslateViewModel,
     snippets: SnippetsViewModel,
+    limits: LimitsViewModel,
+    activity: AgentActivityModel,
     feedback: CopyFeedback,
     backgroundHosts: AnyView
   ) {
@@ -62,6 +68,8 @@ public final class NotchWindowController {
     self.screenshots = screenshots
     self.translate = translate
     self.snippets = snippets
+    self.limits = limits
+    self.activity = activity
     self.feedback = feedback
     self.backgroundHosts = backgroundHosts
   }
@@ -118,6 +126,8 @@ public final class NotchWindowController {
       screenshots: screenshots,
       translate: translate,
       snippets: snippets,
+      limits: limits,
+      activity: activity,
       feedback: feedback,
       backgroundHosts: backgroundHosts
     )
