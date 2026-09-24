@@ -100,8 +100,8 @@ targets: [
 | ~~`PlaybackSeeking`~~ | позиция в треке | удалён, ADR-0011 |
 | `SystemVolumeControlling` | системная громкость | `CoreAudioVolumeAdapter` |
 | `SnippetStoring` | быстрые вставки | `JSONSnippetStore` |
-| `AgentFolderAccessing` | доступ к `~/.claude` и `~/.codex` | `AgentFolderAccess` |
-| `AgentUsageReading` | последний снимок лимитов агента | `FileAgentUsageReader` |
+| `AgentFolderAccessing` | папки `~/.claude` и `~/.codex` | `AgentFolderAccess` |
+| `AgentUsageReading` | самый свежий снимок лимитов агента | `AgentUsageReader` + `ClaudeCodeUsageClient` |
 | `AgentActivityObserving` | записи агента в транскрипты | `FSEventsAgentActivitySource` |
 | `Clock` | текущее время | `SystemClock`, `FixedClock` в тестах |
 
