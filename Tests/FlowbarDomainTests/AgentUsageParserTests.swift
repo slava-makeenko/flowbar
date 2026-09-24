@@ -121,3 +121,49 @@ func windowClampsPercent() {
   #expect(UsageWindow(duration: 1, usedPercent: 140, resetsAt: date).usedPercent == 100)
   #expect(UsageWindow(duration: 1, usedPercent: -3, resetsAt: date).usedPercent == 0)
 }
+
+// Ответ `get_usage` Claude Code 2.1.267, 2026-09-23, сокращён до нужных ключей.
+private let usageResponse = """
+  {"type":"control_response","response":{"subtype":"success","request_id":"flowbar-usage","response":{"subscription_type":"pro","rate_limits_available":true,"rate_limits":{"five_hour":{"utilization":68,"resets_at":"2026-09-23T12:10:00.094959+00:00","limit_dollars":null},"seven_day":{"utilization":46,"resets_at":"2026-09-25T16:00:00.094984+00:00"},"seven_day_opus":null,"nimbus_quill":{"utilization":0,"resets_at":null}}}}}
+  """
+
+@Test("get_usage: оба окна, сброс с микросекундами")
+func usageResponseParsesWindows() throws {
+  let now = Date(timeIntervalSince1970: 1_790_160_000)
+  let usage = try #require(
+    AgentUsageParser.claudeUsageResponse(line: usageResponse, measuredAt: now))
+  let expectedReset = try Date("2026-09-23T12:10:00Z", strategy: .iso8601)
+
+  #expect(usage.agent == .claudeCode)
+  #expect(usage.measuredAt == now)
+  #expect(usage.windows.map(\.usedPercent) == [68, 46])
+  #expect(abs(usage.windows[0].resetsAt.timeIntervalSince(expectedReset)) < 1)
+}
+
+@Test("get_usage: чужой ответ, ошибка и лимиты null не дают снимка")
+func usageResponseRejectsOthers() {
+  let now = Date()
+  let other = usageResponse.replacingOccurrences(of: "flowbar-usage", with: "u2")
+  let failure =
+    #"{"type":"control_response","response":{"subtype":"error","request_id":"flowbar-usage","error":"get_usage is not supported"}}"#
+  let noLimits =
+    #"{"type":"control_response","response":{"subtype":"success","request_id":"flowbar-usage","response":{"rate_limits_available":false,"rate_limits":null}}}"#
+
+  #expect(AgentUsageParser.claudeUsageResponse(line: other, measuredAt: now) == nil)
+  #expect(AgentUsageParser.claudeUsageResponse(line: failure, measuredAt: now) == nil)
+  #expect(AgentUsageParser.claudeUsageResponse(line: noLimits, measuredAt: now) == nil)
+  #expect(AgentUsageParser.isClaudeUsageResponse(line: failure))
+  #expect(!AgentUsageParser.isClaudeUsageResponse(line: other))
+  #expect(!AgentUsageParser.isClaudeUsageResponse(line: #"{"type":"system","subtype":"init"}"#))
+}
+
+@Test("get_usage: строка запроса — одна строка валидного JSON")
+func usageRequestIsSingleLine() throws {
+  let request = AgentUsageParser.claudeUsageRequest
+
+  #expect(!request.contains("\n"))
+  let object = try #require(
+    try JSONSerialization.jsonObject(with: Data(request.utf8)) as? [String: Any]
+  )
+  #expect(object["request_id"] as? String == AgentUsageParser.claudeUsageRequestID)
+}

@@ -4,8 +4,8 @@ import Foundation
 
 /// Доступ к папке со снимками экрана.
 ///
-/// Под песочницей приложение не может читать `~/Desktop` само: пользователь выбирает папку
-/// один раз, а дальше доступ живёт в security-scoped bookmark. ADR-0003.
+/// Папку, выбранную пользователем, помнит закладка. Без неё берётся системная папка
+/// снимков: песочницы нет, и читать её напрямую можно. ADR-0016.
 @MainActor
 public final class ScreenshotFolderAccess: ScreenshotFolderAccessing {
 
@@ -32,9 +32,21 @@ public final class ScreenshotFolderAccess: ScreenshotFolderAccessing {
     return home.appending(path: "Desktop")
   }
 
-  /// Восстанавливает доступ по сохранённой закладке.
-  /// - Returns: папка или `nil`, если закладки нет или она устарела.
+  /// Папка, выбранная пользователем, а без выбора — системная папка снимков.
+  ///
+  /// Закладки, созданные под песочницей, вне её не открываются (ошибка 259) — такая
+  /// закладка тоже ведёт к системной папке, а не к повторному вопросу.
+  /// - Returns: папка или `nil`, если нет ни закладки, ни системной папки.
   public func currentFolder() -> URL? {
+    if let chosen = chosenFolder() { return chosen }
+    let system = Self.systemLocation
+    var isDirectory: ObjCBool = false
+    let exists = FileManager.default.fileExists(atPath: system.path, isDirectory: &isDirectory)
+    return exists && isDirectory.boolValue ? system : nil
+  }
+
+  /// Восстанавливает доступ по сохранённой закладке.
+  private func chosenFolder() -> URL? {
     guard let data = defaults.data(forKey: Self.bookmarkKey) else { return nil }
 
     var isStale = false

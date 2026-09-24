@@ -1,10 +1,10 @@
 import FlowbarDomain
 import Foundation
 
-/// Индикатор работы агентов в свёрнутой пилюле. ADR-0013.
+/// Индикатор работы агентов в свёрнутой пилюле. ADR-0013, ADR-0014.
 ///
-/// Гасит индикатор разовой задачей ровно в момент, который вернуло правило, — периодического
-/// таймера нет: пока агенты молчат, модель ничего не делает.
+/// Гасит индикатор разовой задачей ровно в момент, который вернуло правило, —
+/// периодического таймера нет: пока агенты молчат, модель ничего не делает.
 @MainActor
 @Observable
 public final class AgentActivityModel {
@@ -22,7 +22,7 @@ public final class AgentActivityModel {
   /// - Parameters:
   ///   - observer: наблюдение за транскриптами.
   ///   - clock: часы.
-  ///   - holdWindow: сколько агент считается работающим после записи.
+  ///   - holdWindow: сколько сессия считается работающей после записи.
   public init(
     observer: any AgentActivityObserving,
     clock: any Clock,
@@ -43,19 +43,19 @@ public final class AgentActivityModel {
   /// Начинает следить за агентом. Повторный вызов для того же агента ничего не делает.
   /// - Parameters:
   ///   - agent: агент.
-  ///   - folder: папка агента с выданным доступом.
+  ///   - folder: папка агента.
   public func watch(_ agent: Agent, in folder: URL) {
     guard watches[agent] == nil else { return }
-    let writes = observer.writes(of: agent, in: folder)
+    let changes = observer.changes(of: agent, in: folder)
     watches[agent] = Task { [weak self] in
-      for await _ in writes {
-        self?.recordWrite(by: agent)
+      for await change in changes {
+        self?.record(change)
       }
     }
   }
 
-  private func recordWrite(by agent: Agent) {
-    activity.recordWrite(by: agent, at: clock.now)
+  private func record(_ change: TranscriptChange) {
+    activity.record(change, at: clock.now)
     update()
   }
 

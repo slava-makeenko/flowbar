@@ -59,7 +59,69 @@ public enum AgentUsageParser {
     return AgentUsage(agent: .claudeCode, windows: windows, measuredAt: measuredAt)
   }
 
+  /// Идентификатор запроса `get_usage`, по которому ответ узнаётся в потоке.
+  public static let claudeUsageRequestID = "flowbar-usage"
+
+  /// Строка запроса `get_usage` для потока stream-json Claude Code. ADR-0016.
+  ///
+  /// `skip_behaviors` отключает обход транскриптов за неделю: нужны только лимиты плана.
+  public static let claudeUsageRequest = #"""
+    {"type":"control_request","request_id":"flowbar-usage","request":{"subtype":"get_usage","skip_behaviors":true}}
+    """#
+
+  /// Разбирает строку потока, если это ответ на `get_usage`.
+  /// - Parameters:
+  ///   - line: строка stream-json.
+  ///   - measuredAt: момент ответа.
+  /// - Returns: снимок; `nil`, если строка — не этот ответ, ответ с ошибкой или без окон.
+  public static func claudeUsageResponse(line: String, measuredAt: Date) -> AgentUsage? {
+    guard
+      let object = json(Data(line.utf8)),
+      object["type"] as? String == "control_response",
+      let response = object["response"] as? [String: Any],
+      response["request_id"] as? String == claudeUsageRequestID,
+      response["subtype"] as? String == "success",
+      let body = response["response"] as? [String: Any],
+      let limits = body["rate_limits"] as? [String: Any]
+    else { return nil }
+
+    let windows = [("five_hour", fiveHours), ("seven_day", sevenDays)].compactMap {
+      key, duration in
+      usageWindow(limits[key] as? [String: Any], duration: duration)
+    }
+    guard !windows.isEmpty else { return nil }
+    return AgentUsage(agent: .claudeCode, windows: windows, measuredAt: measuredAt)
+  }
+
+  /// Является ли строка ответом на `get_usage` — удачным или нет.
+  ///
+  /// Нужна, чтобы не ждать до тайм-аута, когда клиент ответил ошибкой.
+  /// - Parameter line: строка stream-json.
+  /// - Returns: `true`, если это ответ на запрос Flowbar.
+  public static func isClaudeUsageResponse(line: String) -> Bool {
+    guard
+      let object = json(Data(line.utf8)),
+      object["type"] as? String == "control_response",
+      let response = object["response"] as? [String: Any]
+    else { return false }
+    return response["request_id"] as? String == claudeUsageRequestID
+  }
+
   // MARK: - Окна
+
+  /// Окно из ответа `get_usage`: доля в процентах, сброс — ISO-строкой.
+  private static func usageWindow(
+    _ object: [String: Any]?,
+    duration: TimeInterval
+  ) -> UsageWindow? {
+    guard
+      let object,
+      let used = number(object["utilization"]),
+      let resets = object["resets_at"] as? String,
+      let resetsAt = date(iso8601: resets)
+    else { return nil }
+    return UsageWindow(duration: duration, usedPercent: used, resetsAt: resetsAt)
+  }
 
   private static func codexWindow(_ object: [String: Any]?) -> UsageWindow? {
     guard

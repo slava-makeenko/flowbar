@@ -2,27 +2,80 @@ import CoreServices
 import FlowbarDomain
 import Foundation
 
-/// Наблюдает за транскриптами агентов через FSEvents. ADR-0013.
+/// Наблюдает за транскриптами агентов через FSEvents. ADR-0013, ADR-0014.
 ///
 /// Событийно, без опроса: пока агенты молчат, поток не делает ничего. Ядро само копит
-/// события и отдаёт их пачкой не чаще раза в секунду.
+/// события и отдаёт их пачкой не чаще раза в секунду; на каждую пачку читается хвост
+/// изменившихся транскриптов.
 public struct FSEventsAgentActivitySource: AgentActivityObserving {
 
   /// Создаёт источник.
   public init() {}
 
-  /// Поток записей агента в транскрипты.
+  /// Поток изменений транскриптов агента.
   /// - Parameters:
   ///   - agent: агент.
   ///   - folder: папка агента.
   /// - Returns: поток; если наблюдение не поднялось, он сразу завершается.
-  public func writes(of agent: Agent, in folder: URL) -> AsyncStream<Void> {
+  public func changes(of agent: Agent, in folder: URL) -> AsyncStream<TranscriptChange> {
     let directory = AgentFiles.transcripts(of: agent, in: folder)
-    // Важен факт записи, а не их число: из пачки событий хватает последнего.
-    return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
-      let watcher = TranscriptWatcher(directory: directory) { continuation.yield() }
+    let reader = TranscriptReader(agent: agent)
+    return AsyncStream { continuation in
+      let watcher = TranscriptWatcher(directory: directory) { paths in
+        for path in paths {
+          continuation.yield(reader.change(at: path))
+        }
+      }
       continuation.onTermination = { _ in watcher.stop() }
       if !watcher.start() { continuation.finish() }
+    }
+  }
+}
+
+/// Превращает путь изменившегося транскрипта в изменение с разобранным ходом.
+///
+/// `@unchecked Sendable` безопасна: вызывается только из колбэка `FSEventStream`, то есть
+/// с одной последовательной очереди.
+private final class TranscriptReader: @unchecked Sendable {
+
+  private let agent: Agent
+
+  /// Признак субагента Codex читается из первой строки один раз на файл.
+  private var codexSubagents: [String: Bool] = [:]
+
+  init(agent: Agent) {
+    self.agent = agent
+  }
+
+  func change(at path: String) -> TranscriptChange {
+    let url = URL(filePath: path)
+    let tail = AgentFiles.tail(of: url, length: TurnStateParser.tailLength) ?? ""
+    let turn: TurnState?
+    switch agent {
+    case .claudeCode: turn = TurnStateParser.claude(tail: tail)
+    case .codex: turn = TurnStateParser.codex(tail: tail)
+    }
+    return TranscriptChange(
+      agent: agent,
+      session: path,
+      isSubagent: isSubagent(path, url: url),
+      turn: turn
+    )
+  }
+
+  /// Субагенты Claude пишут в `<сессия>/subagents/`, у Codex признак — в `session_meta`.
+  private func isSubagent(_ path: String, url: URL) -> Bool {
+    switch agent {
+    case .claudeCode:
+      return url.pathComponents.contains(AgentFiles.claudeSubagentsDirectory)
+    case .codex:
+      if let known = codexSubagents[path] { return known }
+      let isSubagent = AgentFiles.firstLine(of: url).map {
+        TurnStateParser.isCodexSubagent(sessionMeta: $0)
+      }
+      // Непрочитанную строку не кэшируем: файл мог быть ещё пустым.
+      if let isSubagent { codexSubagents[path] = isSubagent }
+      return isSubagent ?? false
     }
   }
 }
@@ -45,11 +98,11 @@ private final class TranscriptWatcher: @unchecked Sendable {
   )
 
   private let directory: URL
-  private let onWrite: @Sendable () -> Void
+  private let onWrite: @Sendable ([String]) -> Void
   private let queue = DispatchQueue(label: "Flowbar.TranscriptWatcher")
   private var stream: FSEventStreamRef?
 
-  init(directory: URL, onWrite: @escaping @Sendable () -> Void) {
+  init(directory: URL, onWrite: @escaping @Sendable ([String]) -> Void) {
     self.directory = directory
     self.onWrite = onWrite
   }
@@ -102,11 +155,13 @@ private final class TranscriptWatcher: @unchecked Sendable {
     }
   }
 
+  /// Пути из пачки без повторов: в пачке один файл встречается по разу на каждую запись.
   private func handle(paths: [String], flags: [FSEventStreamEventFlags]) {
-    let wrote = zip(paths, flags).contains { path, flag in
-      Self.isWrite(path: path, flag: flag)
+    var seen = Set<String>()
+    let written = zip(paths, flags).compactMap { path, flag in
+      Self.isWrite(path: path, flag: flag) && seen.insert(path).inserted ? path : nil
     }
-    if wrote { onWrite() }
+    if !written.isEmpty { onWrite(written) }
   }
 
   /// Запись — это создание или изменение файла транскрипта, который всё ещё на месте.

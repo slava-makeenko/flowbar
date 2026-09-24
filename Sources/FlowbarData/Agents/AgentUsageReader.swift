@@ -1,36 +1,66 @@
 import FlowbarDomain
 import Foundation
 
-/// Читает последний снимок лимитов из файлов агентов. ADR-0012.
-public struct FileAgentUsageReader: AgentUsageReading {
+/// Читает самый свежий снимок лимитов агента. ADR-0012, ADR-0016.
+///
+/// Codex — всегда из rollout-файлов: их пишут и CLI, и десктопное приложение. Claude Code —
+/// живым запросом `get_usage`, если его разрешили, а снимок statusLine — запасной. Из двух
+/// побеждает более свежий: снимок читается часто, живой запрос редко, и без этого правила
+/// экран откатывался бы к старым цифрам между запросами.
+public actor AgentUsageReader: AgentUsageReading {
 
   /// Сколько самых свежих rollout-файлов Codex просматривать, пока не найдётся снимок.
   private static let codexFilesToScan = 3
 
-  /// Создаёт читателя.
-  public init() {}
+  private let claudeClient: ClaudeCodeUsageClient
+  private var lastLiveClaude: AgentUsage?
 
-  /// Читает снимок лимитов агента.
+  /// Создаёт читателя.
+  /// - Parameter claudeClient: живой запрос лимитов Claude Code.
+  public init(claudeClient: ClaudeCodeUsageClient = ClaudeCodeUsageClient()) {
+    self.claudeClient = claudeClient
+  }
+
+  /// Читает самый свежий снимок лимитов агента.
   /// - Parameters:
   ///   - agent: агент.
   ///   - folder: папка агента.
-  /// - Returns: снимок или `nil`, если данных нет или формат не разобран.
-  public func usage(of agent: Agent, in folder: URL) async -> AgentUsage? {
+  ///   - live: можно ли спросить самого агента.
+  /// - Returns: снимок или `nil`, если данных нет.
+  public func usage(of agent: Agent, in folder: URL, live: Bool) async -> AgentUsage? {
     switch agent {
-    case .claudeCode: Self.claude(in: folder)
+    case .claudeCode: await claude(in: folder, live: live)
     case .codex: Self.codex(in: folder)
     }
   }
 
   // MARK: - Claude Code
 
-  private static func claude(in folder: URL) -> AgentUsage? {
+  private func claude(in folder: URL, live: Bool) async -> AgentUsage? {
+    if live, let fetched = await claudeClient.fetch() { lastLiveClaude = fetched }
+    let candidates = [lastLiveClaude, Self.claudeSnapshot(in: folder)].compactMap { $0 }
+    guard let newest = candidates.max(by: { $0.measuredAt < $1.measuredAt }) else {
+      return nil
+    }
+    return newest.withLastActivity(Self.claudeLastActivity(in: folder))
+  }
+
+  /// Снимок, который пишет statusLine терминального `claude`. ADR-0012.
+  private static func claudeSnapshot(in folder: URL) -> AgentUsage? {
     let url = AgentFiles.claudeSnapshot(in: folder)
     guard
       let data = try? Data(contentsOf: url),
       let modified = modificationDate(of: url)
     else { return nil }
     return AgentUsageParser.claude(snapshot: data, measuredAt: modified)
+  }
+
+  /// Последняя работа Claude: по ней видно, что снимок отстал от неё.
+  private static func claudeLastActivity(in folder: URL) -> Date? {
+    transcriptFiles(in: AgentFiles.transcripts(of: .claudeCode, in: folder))
+      .filter { !$0.url.pathComponents.contains(AgentFiles.claudeSubagentsDirectory) }
+      .map(\.modified)
+      .max()
   }
 
   // MARK: - Codex
@@ -43,7 +73,9 @@ public struct FileAgentUsageReader: AgentUsageReading {
       .prefix(codexFilesToScan)
 
     for file in rollouts {
-      if let tail = tail(of: file.url), let usage = AgentUsageParser.codex(tail: tail) {
+      if let tail = AgentFiles.tail(of: file.url, length: AgentUsageParser.codexTailLength),
+        let usage = AgentUsageParser.codex(tail: tail)
+      {
         return usage
       }
     }
@@ -70,18 +102,6 @@ public struct FileAgentUsageReader: AgentUsageReading {
       files.append((url, modified))
     }
     return files
-  }
-
-  /// Хвост файла. Rollout-файлы бывают в мегабайты, а снимок всегда в конце.
-  private static func tail(of url: URL) -> String? {
-    guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
-    defer { try? handle.close() }
-
-    guard let size = try? handle.seekToEnd() else { return nil }
-    let length = UInt64(AgentUsageParser.codexTailLength)
-    try? handle.seek(toOffset: size > length ? size - length : 0)
-    guard let data = try? handle.readToEnd() else { return nil }
-    return String(decoding: data, as: UTF8.self)
   }
 
   private static func modificationDate(of url: URL) -> Date? {

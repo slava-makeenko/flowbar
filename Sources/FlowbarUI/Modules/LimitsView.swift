@@ -17,6 +17,7 @@ struct LimitsView: View {
         section(for: agent)
       }
       Spacer(minLength: 0)
+      footer
     }
     .frame(maxWidth: .infinity, alignment: .leading)
     .task { await model.refreshWhileVisible() }
@@ -29,6 +30,23 @@ struct LimitsView: View {
       heading(for: agent)
         .padding(.bottom, Metrics.Limits.headingBottomPadding)
 
+      if case .usage(let usage) = model.state(of: agent),
+        let outdated = model.outdatedText(for: usage)
+      {
+        Text(outdated)
+          .typeStyle(.metadata)
+          .foregroundStyle(Palette.fg2)
+          .fixedSize(horizontal: false, vertical: true)
+          .padding(.bottom, Metrics.Limits.headingBottomPadding)
+      }
+
+      if let advice = model.adviceText(for: agent) {
+        Text(advice)
+          .typeStyle(.caption)
+          .foregroundStyle(Palette.fg)
+          .padding(.bottom, Metrics.Limits.headingBottomPadding)
+      }
+
       switch model.state(of: agent) {
       case .needsFolder:
         folderRequest(for: agent)
@@ -37,7 +55,7 @@ struct LimitsView: View {
       case .usage(let usage):
         VStack(spacing: Metrics.Limits.windowSpacing) {
           ForEach(usage.windows, id: \.duration) { window in
-            windowRow(window, of: agent)
+            windowRow(window, of: usage)
           }
         }
       }
@@ -59,7 +77,7 @@ struct LimitsView: View {
     }
   }
 
-  private func windowRow(_ window: UsageWindow, of agent: Agent) -> some View {
+  private func windowRow(_ window: UsageWindow, of usage: AgentUsage) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       HStack(spacing: Metrics.Control.compactSpacing) {
         Text(LimitsViewModel.title(for: window))
@@ -75,27 +93,46 @@ struct LimitsView: View {
       }
       UsageBar(
         fraction: model.fraction(of: window),
-        color: model.isNearLimit(window) ? Palette.danger : agent.color
+        color: model.isNearLimit(window) ? Palette.danger : usage.agent.color
       )
       .padding(.top, Metrics.Limits.barTopPadding)
+
+      if let forecast = model.forecastText(for: window, of: usage) {
+        Text(forecast)
+          .typeStyle(.metadata)
+          .foregroundStyle(model.runsOut(window, of: usage) ? Palette.danger : Palette.muted)
+          .padding(.top, Metrics.Limits.forecastTopPadding)
+      }
     }
     .accessibilityElement(children: .combine)
+  }
+
+  // MARK: - Перечитывание
+
+  private var footer: some View {
+    HStack(spacing: Metrics.Control.compactSpacing) {
+      Text("Агенты обновляют лимиты, только пока работают")
+        .typeStyle(.metadata)
+        .foregroundStyle(Palette.muted)
+      Spacer(minLength: 0)
+      IconButton(
+        systemImage: "arrow.clockwise",
+        label: "Перечитать лимиты",
+        isConfirming: model.isRefreshConfirmed
+      ) {
+        Task { await model.refreshNow() }
+      }
+    }
   }
 
   // MARK: - Пустые состояния
 
   private func folderRequest(for agent: Agent) -> some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text("Flowbar не видит папку \(agent.folderTitle)")
+      Text("Не найдена папка \(agent.folderTitle) — \(agent.title) не установлен?")
         .typeStyle(.cardTitle)
         .foregroundStyle(Palette.fg2)
-      if model.rejectedFolder == agent {
-        Text("Нужна именно \(agent.folderTitle) — окно выбора откроется сразу в ней")
-          .typeStyle(.metadata)
-          .foregroundStyle(Palette.muted)
-          .padding(.top, Metrics.Limits.noteTopPadding)
-      }
-      actionButton("Выбрать папку") {
+      actionButton("Проверить снова") {
         Task { await model.requestAccess(for: agent) }
       }
       .padding(.top, Metrics.Limits.noteTopPadding)
@@ -106,13 +143,15 @@ struct LimitsView: View {
     switch agent {
     case .claudeCode:
       VStack(alignment: .leading, spacing: 0) {
-        Text("Нет данных. Claude Code отдаёт лимиты только в statusLine")
+        Text("Нет данных: claude не ответил на запрос лимитов")
           .typeStyle(.cardTitle)
           .foregroundStyle(Palette.fg2)
-        Text("Вставьте настройку в ~/.claude/settings.json — она заменит текущую строку состояния")
-          .typeStyle(.metadata)
-          .foregroundStyle(Palette.muted)
-          .padding(.top, Metrics.Limits.noteTopPadding)
+        Text(
+          "Проверьте вход в Claude Code. Запасной источник — statusLine: вставьте настройку в ~/.claude/settings.json, она заменит текущую строку состояния"
+        )
+        .typeStyle(.metadata)
+        .foregroundStyle(Palette.muted)
+        .padding(.top, Metrics.Limits.noteTopPadding)
         actionButton("Скопировать настройку") {
           Task { await model.copyClaudeSetup() }
         }

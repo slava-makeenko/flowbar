@@ -299,6 +299,9 @@ public enum Metrics {
 
     /// Отступ над пояснением под кнопкой.
     public static let noteTopPadding: CGFloat = 8
+
+    /// Отступ от полосы до прогноза.
+    public static let forecastTopPadding: CGFloat = 4
   }
 
   // MARK: - Плеер

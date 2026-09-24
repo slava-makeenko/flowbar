@@ -29,6 +29,11 @@ final class CompositionRoot {
 
   /// Поднимает приложение.
   func start() {
+    // До создания хранилищ: они откроют файлы там, куда данные ещё предстоит перенести.
+    SandboxContainerMigration.migrateIfNeeded(
+      bundleIdentifier: Bundle.main.bundleIdentifier ?? Self.fallbackBundleIdentifier,
+      supportFolderName: Self.supportFolderName
+    )
     let settingsStore = UserDefaultsSettingsStore(fallbackLifetime: Self.defaultHistoryLifetime)
     let clips = SQLiteClipStore(fileURL: Self.supportDirectory.appending(path: "clips.sqlite"))
     let blobs = FileSystemBlobStore(directory: Self.supportDirectory.appending(path: "clips"))
@@ -70,7 +75,7 @@ final class CompositionRoot {
     let activity = AgentActivityModel(observer: FSEventsAgentActivitySource(), clock: clock)
     let limits = LimitsViewModel(
       access: AgentFolderAccess(),
-      reader: FileAgentUsageReader(),
+      reader: AgentUsageReader(),
       clock: clock,
       pasteboard: pasteboard,
       feedback: feedback,
@@ -179,9 +184,16 @@ final class CompositionRoot {
 
   /// Каталог приложения в Application Support.
   ///
-  /// В песочнице путь ведёт внутрь контейнера, снаружи — в домашнюю библиотеку.
+  /// Домашняя библиотека: песочницы нет, ADR-0016. Данные из прежнего контейнера
+  /// переносит `SandboxContainerMigration`.
   private static var supportDirectory: URL {
     let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-    return (base.first ?? URL(filePath: NSTemporaryDirectory())).appending(path: "Flowbar")
+    return (base.first ?? URL(filePath: NSTemporaryDirectory())).appending(path: supportFolderName)
   }
+
+  /// Папка приложения в Application Support.
+  private static let supportFolderName = "Flowbar"
+
+  /// Идентификатор, если бандл его не отдал — например, при запуске бинарника без бандла.
+  private static let fallbackBundleIdentifier = "app.flowbar.Flowbar"
 }
