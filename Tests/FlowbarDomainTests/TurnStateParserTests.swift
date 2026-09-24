@@ -87,3 +87,21 @@ func codexSubagentDetection() {
   #expect(!TurnStateParser.isCodexSubagent(sessionMeta: main))
   #expect(!TurnStateParser.isCodexSubagent(sessionMeta: "мусор"))
 }
+
+@Test("Хук Codex: начало хода и инструменты — работа, Stop — конец хода")
+func codexHookEvents() throws {
+  func event(_ name: String) -> String {
+    #"{"session_id":"01a0d25f-45bd","turn_id":"t","hook_event_name":"\#(name)"}"#
+  }
+
+  for name in ["UserPromptSubmit", "PreToolUse", "PostToolUse"] {
+    let parsed = try #require(TurnStateParser.codexHook(payload: event(name)))
+    #expect(parsed.session == "01a0d25f-45bd")
+    #expect(parsed.turn == .working)
+  }
+  #expect(TurnStateParser.codexHook(payload: event("Stop"))?.turn == .waiting)
+  #expect(TurnStateParser.codexHook(payload: event("SessionStart")) == nil)
+  #expect(TurnStateParser.codexHook(payload: event("SubagentStop")) == nil)
+  #expect(TurnStateParser.codexHook(payload: #"{"hook_event_name":"Stop"}"#) == nil)
+  #expect(TurnStateParser.codexHook(payload: "") == nil)
+}

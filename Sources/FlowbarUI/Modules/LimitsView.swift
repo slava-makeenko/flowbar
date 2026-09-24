@@ -30,6 +30,14 @@ struct LimitsView: View {
       heading(for: agent)
         .padding(.bottom, Metrics.Limits.headingBottomPadding)
 
+      if let problem = model.liveProblemText(for: agent) {
+        Text(problem)
+          .typeStyle(.metadata)
+          .foregroundStyle(Palette.fg2)
+          .fixedSize(horizontal: false, vertical: true)
+          .padding(.bottom, Metrics.Limits.headingBottomPadding)
+      }
+
       if case .usage(let usage) = model.state(of: agent),
         let outdated = model.outdatedText(for: usage)
       {
@@ -58,6 +66,10 @@ struct LimitsView: View {
             windowRow(window, of: usage)
           }
         }
+      }
+
+      if agent == .codex && model.needsCodexHooks {
+        codexHooksOffer
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,6 +135,21 @@ struct LimitsView: View {
         Task { await model.refreshNow() }
       }
     }
+  }
+
+  // MARK: - Хуки Codex
+
+  private var codexHooksOffer: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Text("Работа Codex видна в пилюле только через его хуки")
+        .typeStyle(.metadata)
+        .foregroundStyle(Palette.muted)
+      actionButton("Подключить") {
+        Task { await model.installCodexHooks() }
+      }
+      .padding(.top, Metrics.Limits.noteTopPadding)
+    }
+    .padding(.top, Metrics.Limits.noteTopPadding)
   }
 
   // MARK: - Пустые состояния

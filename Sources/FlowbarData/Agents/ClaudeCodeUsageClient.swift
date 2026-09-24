@@ -11,14 +11,24 @@ public actor ClaudeCodeUsageClient {
   /// Сколько ждать ответа: холодный старт CLI — 1–3 с, дальше — сетевой запрос.
   public static let timeout: Duration = .seconds(15)
 
-  private var inFlight: Task<AgentUsage?, Never>?
+  /// Итог запроса.
+  public enum Outcome: Sendable {
+
+    /// Лимиты получены.
+    case usage(AgentUsage)
+
+    /// Запрос не дал цифр.
+    case problem(LiveUsageProblem)
+  }
+
+  private var inFlight: Task<Outcome, Never>?
 
   /// Создаёт клиента.
   public init() {}
 
   /// Спрашивает лимиты. Параллельный вызов ждёт уже идущий запрос, а не запускает второй CLI.
-  /// - Returns: снимок или `nil`: `claude` не найден, не ответил вовремя или ответил ошибкой.
-  public func fetch() async -> AgentUsage? {
+  /// - Returns: снимок или причина, по которой его нет.
+  public func fetch() async -> Outcome {
     if let inFlight { return await inFlight.value }
     let task = Task.detached(priority: .utility) { await Self.run() }
     inFlight = task
@@ -29,8 +39,8 @@ public actor ClaudeCodeUsageClient {
 
   // MARK: - Процесс
 
-  private static func run() async -> AgentUsage? {
-    guard let executable = executable() else { return nil }
+  private static func run() async -> Outcome {
+    guard let executable = executable() else { return .problem(.noResponse) }
 
     let process = Process()
     let input = Pipe()
@@ -49,21 +59,21 @@ public actor ClaudeCodeUsageClient {
     do {
       try process.run()
     } catch {
-      return nil
+      return .problem(.noResponse)
     }
     input.fileHandleForWriting.write(Data((AgentUsageParser.claudeUsageRequest + "\n").utf8))
 
     // Чтение строк на отмену не реагирует — оно ждёт данных или конца вывода. Поэтому
     // тайм-аут не отменяет чтение, а завершает процесс: вывод закрывается, чтение кончается.
     let running = RunningProcess(process)
-    return await withTaskGroup(of: AgentUsage?.self) { group in
+    return await withTaskGroup(of: Outcome.self) { group in
       group.addTask { await response(from: output.fileHandleForReading) }
       group.addTask {
         try? await Task.sleep(for: timeout)
         running.terminate()
-        return nil
+        return .problem(.noResponse)
       }
-      let first = await group.next() ?? nil
+      let first = await group.next() ?? .problem(.noResponse)
       running.terminate()
       group.cancelAll()
       return first
@@ -72,16 +82,20 @@ public actor ClaudeCodeUsageClient {
 
   /// Читает поток до ответа на запрос Flowbar. Остальные строки — инициализация, хуки —
   /// пропускаются.
-  private static func response(from handle: FileHandle) async -> AgentUsage? {
+  private static func response(from handle: FileHandle) async -> Outcome {
     do {
       for try await line in handle.bytes.lines {
         guard AgentUsageParser.isClaudeUsageResponse(line: line) else { continue }
-        return AgentUsageParser.claudeUsageResponse(line: line, measuredAt: Date())
+        if let usage = AgentUsageParser.claudeUsageResponse(line: line, measuredAt: Date()) {
+          return .usage(usage)
+        }
+        let unavailable = AgentUsageParser.isClaudeUsageUnavailable(line: line)
+        return .problem(unavailable ? .notSignedIn : .noResponse)
       }
     } catch {
-      return nil
+      return .problem(.noResponse)
     }
-    return nil
+    return .problem(.noResponse)
   }
 
   // MARK: - Окружение

@@ -167,3 +167,22 @@ func usageRequestIsSingleLine() throws {
   )
   #expect(object["request_id"] as? String == AgentUsageParser.claudeUsageRequestID)
 }
+
+@Test("get_usage: rate_limits_available false — лимитов плана нет")
+func usageResponseUnavailable() {
+  let unavailable =
+    #"{"type":"control_response","response":{"subtype":"success","request_id":"flowbar-usage","response":{"subscription_type":null,"rate_limits_available":false,"rate_limits":{}}}}"#
+
+  #expect(AgentUsageParser.isClaudeUsageUnavailable(line: unavailable))
+  #expect(!AgentUsageParser.isClaudeUsageUnavailable(line: usageResponse))
+  #expect(AgentUsageParser.claudeUsageResponse(line: unavailable, measuredAt: Date()) == nil)
+}
+
+@Test("Остаток — дополнение до 100, после сброса окно снова полное")
+func windowRemaining() {
+  let resetsAt = Date(timeIntervalSince1970: 1_790_093_632)
+  let window = UsageWindow(duration: 300 * 60, usedPercent: 68, resetsAt: resetsAt)
+
+  #expect(window.remainingPercent(at: resetsAt.addingTimeInterval(-1)) == 32)
+  #expect(window.remainingPercent(at: resetsAt) == 100)
+}

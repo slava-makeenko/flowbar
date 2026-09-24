@@ -61,6 +61,16 @@ enum AgentFiles {
     }
   }
 
+  /// Каталог, куда хук Flowbar пишет события хода Codex. ADR-0017.
+  static func codexHookEvents(in folder: URL) -> URL {
+    folder.appending(path: CodexHooks.eventsDirectory, directoryHint: .isDirectory)
+  }
+
+  /// Конфиг хуков Codex.
+  static func codexHooksConfig(in folder: URL) -> URL {
+    folder.appending(path: "hooks.json")
+  }
+
   /// Снимок лимитов Claude Code, который пишет statusLine-команда.
   static func claudeSnapshot(in folder: URL) -> URL {
     folder.appending(path: "flowbar-usage.json")

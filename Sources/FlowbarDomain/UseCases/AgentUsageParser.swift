@@ -93,6 +93,23 @@ public enum AgentUsageParser {
     return AgentUsage(agent: .claudeCode, windows: windows, measuredAt: measuredAt)
   }
 
+  /// Сообщает ли удачный ответ `get_usage`, что лимитов плана нет.
+  ///
+  /// `rate_limits_available: false` приходит, когда Claude Code вошёл не по подписке —
+  /// по API-ключу, через Bedrock или Vertex — или не вошёл вовсе.
+  /// - Parameter line: строка stream-json.
+  /// - Returns: `true`, если это ответ Flowbar без лимитов плана.
+  public static func isClaudeUsageUnavailable(line: String) -> Bool {
+    guard
+      let object = json(Data(line.utf8)),
+      let response = object["response"] as? [String: Any],
+      response["request_id"] as? String == claudeUsageRequestID,
+      response["subtype"] as? String == "success",
+      let body = response["response"] as? [String: Any]
+    else { return false }
+    return body["rate_limits_available"] as? Bool == false
+  }
+
   /// Является ли строка ответом на `get_usage` — удачным или нет.
   ///
   /// Нужна, чтобы не ждать до тайм-аута, когда клиент ответил ошибкой.

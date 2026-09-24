@@ -11,21 +11,38 @@ public struct AgentActivity: Equatable, Sendable {
   /// Окно удержания по умолчанию.
   public static let defaultHoldWindow: TimeInterval = 20
 
+  /// Окно удержания для сессий, о которых сообщают хуки.
+  ///
+  /// Хук явно сообщает конец хода, поэтому ждать тишину незачем: окно здесь — только
+  /// страховка от сессии, упавшей посреди хода. Между вызовами инструментов модель
+  /// может думать минутами, и короткое окно гасило бы точку посреди работы. ADR-0017.
+  public static let defaultHookHoldWindow: TimeInterval = 10 * 60
+
   /// Сколько сессия считается работающей после последней записи.
   public let holdWindow: TimeInterval
+
+  /// Окно удержания для сессий, о которых сообщают хуки.
+  public let hookHoldWindow: TimeInterval
 
   private struct Session: Equatable, Sendable {
     let agent: Agent
     var lastWrite: Date
     var turn: TurnState?
+    var hold: TimeInterval
   }
 
   private var sessions: [String: Session] = [:]
 
   /// Создаёт правило.
-  /// - Parameter holdWindow: окно удержания.
-  public init(holdWindow: TimeInterval = AgentActivity.defaultHoldWindow) {
+  /// - Parameters:
+  ///   - holdWindow: окно удержания для транскриптов.
+  ///   - hookHoldWindow: окно удержания для сессий, о которых сообщают хуки.
+  public init(
+    holdWindow: TimeInterval = AgentActivity.defaultHoldWindow,
+    hookHoldWindow: TimeInterval = AgentActivity.defaultHookHoldWindow
+  ) {
     self.holdWindow = holdWindow
+    self.hookHoldWindow = hookHoldWindow
   }
 
   /// Учитывает изменение транскрипта.
@@ -36,9 +53,12 @@ public struct AgentActivity: Equatable, Sendable {
   ///   - change: изменение.
   ///   - moment: момент записи.
   public mutating func record(_ change: TranscriptChange, at moment: Date) {
+    let hold = change.source == .hook ? hookHoldWindow : holdWindow
     var session =
-      sessions[change.session] ?? Session(agent: change.agent, lastWrite: moment, turn: nil)
+      sessions[change.session]
+      ?? Session(agent: change.agent, lastWrite: moment, turn: nil, hold: hold)
     session.lastWrite = max(session.lastWrite, moment)
+    session.hold = hold
     if !change.isSubagent, let turn = change.turn { session.turn = turn }
     sessions[change.session] = session
     // Затихшие и закончившие ход сессии больше ничего не покажут: иначе словарь рос бы
@@ -62,12 +82,12 @@ public struct AgentActivity: Equatable, Sendable {
   public func nextChange(after now: Date) -> Date? {
     sessions.values
       .filter { $0.turn != .waiting }
-      .map { $0.lastWrite + holdWindow }
+      .map { $0.lastWrite + $0.hold }
       .filter { $0 > now }
       .min()
   }
 
   private func isWorking(_ session: Session, at now: Date) -> Bool {
-    session.turn != .waiting && now < session.lastWrite + holdWindow
+    session.turn != .waiting && now < session.lastWrite + session.hold
   }
 }

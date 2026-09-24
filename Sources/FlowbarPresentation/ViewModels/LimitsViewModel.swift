@@ -42,10 +42,18 @@ public final class LimitsViewModel {
     uniqueKeysWithValues: Agent.allCases.map { ($0, .needsFolder) }
   )
 
+  /// Почему живой запрос лимитов не дал цифр, по агентам.
+  public private(set) var liveProblems: [Agent: LiveUsageProblem] = [:]
+
+  /// Стоят ли хуки Codex. До первой проверки считается, что стоят: кнопка не мигает
+  /// при каждом открытии экрана.
+  public private(set) var codexHooksInstalled = true
+
   /// Момент последнего чтения: от него считаются «сброшено» и возраст снимка.
   public private(set) var now: Date
 
   private let access: any AgentFolderAccessing
+  private let codexHooks: any CodexHooksInstalling
   private let reader: any AgentUsageReading
   private let clock: any Clock
   private let pasteboard: any PasteboardWriting
@@ -57,6 +65,7 @@ public final class LimitsViewModel {
   /// Создаёт вью-модель.
   /// - Parameters:
   ///   - access: доступ к папкам агентов.
+  ///   - codexHooks: хуки Flowbar в конфиге Codex.
   ///   - reader: чтение снимков лимитов.
   ///   - clock: часы.
   ///   - pasteboard: запись в пастборд — для настройки statusLine.
@@ -64,6 +73,7 @@ public final class LimitsViewModel {
   ///   - onFolderGranted: вызывается, когда доступ к папке агента появился.
   public init(
     access: any AgentFolderAccessing,
+    codexHooks: any CodexHooksInstalling,
     reader: any AgentUsageReading,
     clock: any Clock,
     pasteboard: any PasteboardWriting,
@@ -71,6 +81,7 @@ public final class LimitsViewModel {
     onFolderGranted: @escaping @MainActor (Agent, URL) -> Void
   ) {
     self.access = access
+    self.codexHooks = codexHooks
     self.reader = reader
     self.clock = clock
     self.pasteboard = pasteboard
@@ -94,6 +105,27 @@ public final class LimitsViewModel {
       grant(folder, to: agent)
     }
     await refresh(live: false)
+    await checkCodexHooks()
+  }
+
+  /// Нужна ли кнопка подключения хуков Codex: Codex установлен, а хуков нет.
+  public var needsCodexHooks: Bool {
+    !codexHooksInstalled && state(of: .codex) != .needsFolder
+  }
+
+  /// Ставит хуки Codex. Без них работа Codex в пилюле не видна: он держит rollout-файл
+  /// открытым, и FSEvents записей не замечает. ADR-0017.
+  public func installCodexHooks() async {
+    codexHooksInstalled = await codexHooks.install()
+    guard codexHooksInstalled else { return }
+    feedback.confirm("Хуки подключены — подтвердите их в Codex", item: Self.codexHooksItem)
+  }
+
+  /// Идентификатор кнопки подключения хуков для подтверждения.
+  public static let codexHooksItem = "limits.codexHooks"
+
+  private func checkCodexHooks() async {
+    codexHooksInstalled = await codexHooks.isInstalled
   }
 
   /// Проверяет папку агента заново — например, после установки агента.
@@ -109,6 +141,7 @@ public final class LimitsViewModel {
   /// Файлы — раз в 10 с, живой запрос — при открытии и раз в минуту.
   public func refreshWhileVisible() async {
     lastLiveRefresh = nil
+    await checkCodexHooks()
     while !Task.isCancelled {
       let isLiveDue =
         lastLiveRefresh.map {
@@ -157,19 +190,20 @@ public final class LimitsViewModel {
     return "\(hours) \(plural(hours, "час", "часа", "часов"))"
   }
 
-  /// Израсходованная доля на текущий момент.
+  /// Оставшаяся доля на текущий момент: пользователь спрашивает «сколько ещё можно»,
+  /// а не «сколько потрачено».
   /// - Parameter window: окно.
-  /// - Returns: «96 %».
+  /// - Returns: «осталось 4 %».
   public func percentText(for window: UsageWindow) -> String {
-    let percent = Int(window.usedPercent(at: now).rounded())
-    return "\(percent) %"
+    let percent = Int(window.remainingPercent(at: now).rounded())
+    return "осталось \(percent) %"
   }
 
-  /// Доля от 0 до 1 для полосы.
+  /// Оставшаяся доля от 0 до 1 для полосы: полоса убывает по мере расхода.
   /// - Parameter window: окно.
   /// - Returns: доля.
   public func fraction(of window: UsageWindow) -> Double {
-    window.usedPercent(at: now) / 100
+    window.remainingPercent(at: now) / 100
   }
 
   /// Почти исчерпано ли окно.
@@ -215,7 +249,7 @@ public final class LimitsViewModel {
 
   /// Совет переключиться для агента, у которого окно кончается.
   /// - Parameter agent: агент.
-  /// - Returns: «У Codex за 5 часов занято 30 %» или `nil`.
+  /// - Returns: «У Codex за 5 часов осталось 70 %» или `nil`.
   public func adviceText(for agent: Agent) -> String? {
     let usages = Agent.allCases.compactMap { agent -> AgentUsage? in
       guard case .usage(let usage) = state(of: agent) else { return nil }
@@ -225,7 +259,21 @@ public final class LimitsViewModel {
       return nil
     }
     let title = Self.title(for: advice.window).lowercased()
-    return "У \(advice.to.title) за \(title) занято \(percentText(for: advice.window))"
+    return "У \(advice.to.title) за \(title) \(percentText(for: advice.window))"
+  }
+
+  /// Почему свежих цифр нет — вместо молчаливого показа старого снимка.
+  /// - Parameter agent: агент.
+  /// - Returns: пояснение или `nil`, если живой запрос удался.
+  public func liveProblemText(for agent: Agent) -> String? {
+    switch liveProblems[agent] {
+    case .notSignedIn:
+      "Claude Code не вошёл по подписке — лимиты недоступны. Войдите в терминале: claude, затем /login"
+    case .noResponse:
+      "claude не ответил на запрос лимитов — цифры ниже из запасного снимка"
+    case nil:
+      nil
+    }
   }
 
   /// Предупреждение о заведомо устаревшем снимке.
@@ -275,6 +323,7 @@ public final class LimitsViewModel {
     for (agent, folder) in folders {
       let usage = await reader.usage(of: agent, in: folder, live: live)
       states[agent] = usage.map(AgentState.usage) ?? .noData
+      liveProblems[agent] = await reader.liveProblem(of: agent)
     }
     // После чтения: живой запрос идёт секунды, и подписи должны считаться от ответа.
     now = clock.now

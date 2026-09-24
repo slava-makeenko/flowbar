@@ -10,6 +10,16 @@ public enum Agent: String, CaseIterable, Sendable {
   case codex
 }
 
+/// Почему живой запрос лимитов не дал цифр. ADR-0016.
+public enum LiveUsageProblem: Equatable, Sendable {
+
+  /// Агент ответил, что лимитов плана нет: вход не по подписке или его нет вовсе.
+  case notSignedIn
+
+  /// Агент не найден, не ответил вовремя или ответил ошибкой.
+  case noResponse
+}
+
 /// Окно лимита: сколько израсходовано и когда счётчик обнулится.
 public struct UsageWindow: Equatable, Sendable {
 
@@ -41,6 +51,13 @@ public struct UsageWindow: Equatable, Sendable {
   /// - Returns: доля в процентах.
   public func usedPercent(at now: Date) -> Double {
     now >= resetsAt ? 0 : usedPercent
+  }
+
+  /// Оставшаяся доля на указанный момент: после сброса окно снова полное.
+  /// - Parameter now: текущий момент.
+  /// - Returns: доля в процентах.
+  public func remainingPercent(at now: Date) -> Double {
+    100 - usedPercent(at: now)
   }
 
   /// Прогноз окна при среднем темпе с его начала.

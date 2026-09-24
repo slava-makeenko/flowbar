@@ -28,6 +28,11 @@ public protocol AgentUsageReading: Sendable {
   ///     запуск CLI, — поэтому частоту решает вызывающий. ADR-0016.
   /// - Returns: самый свежий известный снимок или `nil`, если данных нет.
   func usage(of agent: Agent, in folder: URL, live: Bool) async -> AgentUsage?
+
+  /// Почему последний живой запрос не дал цифр.
+  /// - Parameter agent: агент.
+  /// - Returns: причина или `nil`, если запрос удался или его не было.
+  func liveProblem(of agent: Agent) async -> LiveUsageProblem?
 }
 
 /// Наблюдение за транскриптами агента.
@@ -42,4 +47,16 @@ public protocol AgentActivityObserving: Sendable {
   ///   - folder: папка агента.
   /// - Returns: поток, завершающийся при отмене подписчика.
   func changes(of agent: Agent, in folder: URL) -> AsyncStream<TranscriptChange>
+}
+
+/// Хуки Flowbar в конфиге Codex. ADR-0017.
+public protocol CodexHooksInstalling: Sendable {
+
+  /// Стоят ли хуки.
+  var isInstalled: Bool { get async }
+
+  /// Ставит недостающие хуки, сохранив прежний конфиг рядом.
+  /// - Returns: `true`, если после вызова хуки стоят.
+  @discardableResult
+  func install() async -> Bool
 }

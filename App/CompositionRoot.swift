@@ -75,6 +75,7 @@ final class CompositionRoot {
     let activity = AgentActivityModel(observer: FSEventsAgentActivitySource(), clock: clock)
     let limits = LimitsViewModel(
       access: AgentFolderAccess(),
+      codexHooks: CodexHooksFile(folder: AgentFolderAccess.expectedLocation(of: .codex)),
       reader: AgentUsageReader(),
       clock: clock,
       pasteboard: pasteboard,

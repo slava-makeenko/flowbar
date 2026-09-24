@@ -14,6 +14,7 @@ public actor AgentUsageReader: AgentUsageReading {
 
   private let claudeClient: ClaudeCodeUsageClient
   private var lastLiveClaude: AgentUsage?
+  private var claudeProblem: LiveUsageProblem?
 
   /// Создаёт читателя.
   /// - Parameter claudeClient: живой запрос лимитов Claude Code.
@@ -34,10 +35,25 @@ public actor AgentUsageReader: AgentUsageReading {
     }
   }
 
+  /// Почему последний живой запрос не дал цифр.
+  /// - Parameter agent: агент.
+  /// - Returns: причина или `nil`.
+  public func liveProblem(of agent: Agent) async -> LiveUsageProblem? {
+    agent == .claudeCode ? claudeProblem : nil
+  }
+
   // MARK: - Claude Code
 
   private func claude(in folder: URL, live: Bool) async -> AgentUsage? {
-    if live, let fetched = await claudeClient.fetch() { lastLiveClaude = fetched }
+    if live {
+      switch await claudeClient.fetch() {
+      case .usage(let fetched):
+        lastLiveClaude = fetched
+        claudeProblem = nil
+      case .problem(let problem):
+        claudeProblem = problem
+      }
+    }
     let candidates = [lastLiveClaude, Self.claudeSnapshot(in: folder)].compactMap { $0 }
     guard let newest = candidates.max(by: { $0.measuredAt < $1.measuredAt }) else {
       return nil

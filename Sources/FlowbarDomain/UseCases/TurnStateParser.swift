@@ -50,6 +50,26 @@ public enum TurnStateParser {
     return nil
   }
 
+  /// Разбирает событие хука Codex, которое хук Flowbar сохранил как есть. ADR-0017.
+  ///
+  /// Начало хода и вызовы инструментов — «работает», `Stop` — конец хода. Остальные
+  /// события — начало сессии, субагенты, уведомления — ход не меняют.
+  /// - Parameter payload: JSON, который Codex передал хуку.
+  /// - Returns: сессия и состояние хода или `nil`, если событие ход не меняет.
+  public static func codexHook(payload: String) -> (session: String, turn: TurnState)? {
+    guard
+      let object = (try? JSONSerialization.jsonObject(with: Data(payload.utf8)))
+        as? [String: Any],
+      let session = object["session_id"] as? String, !session.isEmpty
+    else { return nil }
+
+    switch object["hook_event_name"] as? String {
+    case "UserPromptSubmit", "PreToolUse", "PostToolUse": return (session, .working)
+    case "Stop": return (session, .waiting)
+    default: return nil
+    }
+  }
+
   /// Принадлежит ли rollout-файл Codex субагенту.
   /// - Parameter firstLine: первая строка файла — `session_meta`.
   /// - Returns: `true`, если в `payload.source` указан субагент.

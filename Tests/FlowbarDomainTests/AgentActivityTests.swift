@@ -9,9 +9,11 @@ private func change(
   _ agent: Agent = .codex,
   session: String = "a",
   turn: TurnState? = .working,
-  subagent: Bool = false
+  subagent: Bool = false,
+  source: TranscriptChange.Source = .transcript
 ) -> TranscriptChange {
-  TranscriptChange(agent: agent, session: session, isSubagent: subagent, turn: turn)
+  TranscriptChange(
+    agent: agent, session: session, isSubagent: subagent, turn: turn, source: source)
 }
 
 private func at(_ seconds: TimeInterval) -> Date {
@@ -123,4 +125,24 @@ func nextChangeIsNearestFade() {
   #expect(activity.nextChange(after: at(5)) == at(21))
   #expect(activity.nextChange(after: at(21)) == at(30))
   #expect(activity.nextChange(after: at(30)) == nil)
+}
+
+@Test("Сессия из хука держится дольше: модель думает между инструментами минутами")
+func hookSessionHoldsLonger() {
+  var activity = AgentActivity(holdWindow: 20, hookHoldWindow: 600)
+
+  activity.record(change(turn: .working, source: .hook), at: at(1))
+
+  #expect(activity.working(at: at(300)) == [.codex])
+  #expect(activity.working(at: at(601)).isEmpty)
+}
+
+@Test("Stop из хука гасит сразу")
+func hookStopDimsImmediately() {
+  var activity = AgentActivity(holdWindow: 20, hookHoldWindow: 600)
+
+  activity.record(change(turn: .working, source: .hook), at: at(1))
+  activity.record(change(turn: .waiting, source: .hook), at: at(90))
+
+  #expect(activity.working(at: at(90)).isEmpty)
 }
